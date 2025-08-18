@@ -12,6 +12,7 @@ import {
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 
 export function LoginDialog() {
   const router = useRouter()
@@ -46,12 +47,12 @@ export function LoginDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline">
-          {status === 'loading' ? 'Loading...' : 'Login'}
+          {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Login'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-center">Login Page</DialogTitle>
+          <DialogTitle className="text-center">Sign In</DialogTitle>
           <DialogDescription className="text-center">
             Sign in with your authorized Google account.
           </DialogDescription>
@@ -64,7 +65,7 @@ export function LoginDialog() {
             variant="outline"
             disabled={status === 'loading'}
           >
-            {status === 'loading' ? 'Loading...' : 'Sign In with Google'}
+            {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In with Google'}
           </Button>
         </DialogFooter>
       </DialogContent>
