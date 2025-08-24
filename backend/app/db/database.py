@@ -1,7 +1,4 @@
-import io
-import os
-import requests
-import pandas as pd
+import uuid 
 from pymongo import MongoClient
 from ..config.settings import get_database_settings
 
@@ -21,3 +18,6 @@ pipeline_status = db["pipelineStatus"]
 
 # New collection for files
 files_collection = db["files"]
+
+# New collection for pipelines
+pipelines_collection = db["pipelines"] 
