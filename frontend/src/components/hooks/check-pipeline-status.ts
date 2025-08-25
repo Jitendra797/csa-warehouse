@@ -24,16 +24,16 @@ export const usePipelineStatusCheck = (
 
     // If pipeline is running, set up an interval to check status every 30 seconds
     if (pipelineStatus === 'running') {
-      console.log(`Setting up status check interval for dataset ${datasetId} every 15 seconds`)
+      console.log(`Setting up status check interval for dataset ${datasetId} every 30 seconds`)
       
       // Check immediately
       checkPipelineStatus()
       
-      // Then set up interval for every 15 seconds
+      // Then set up interval for every 30 seconds
       intervalRef.current = setInterval(() => {
-        console.log(`Checking pipeline status for dataset ${datasetId} (15-second interval)`)
+        console.log(`Checking pipeline status for dataset ${datasetId} (30-second interval)`)
         checkPipelineStatus()
-      }, 30 * 1000) // 15 seconds in milliseconds
+      }, 30 * 1000) // 30 seconds in milliseconds
     }
 
     // Cleanup function to clear interval when component unmounts or status changes
@@ -45,3 +45,5 @@ export const usePipelineStatusCheck = (
     }
   }, [pipelineStatus, checkPipelineStatus, datasetId])
 }
+
+

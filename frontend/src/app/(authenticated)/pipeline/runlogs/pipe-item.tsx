@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { getPipelineStatusPipelineStatusPost, runPipelineRunPipelinePost } from '@/lib/hey-api/client/sdk.gen'
 import { RunPipelineRequest, PipelineStatusRequest, RunPipelineResponse, PipelineStatusResponse } from '@/lib/hey-api/client/types.gen'
 import { useSession } from 'next-auth/react'
-import { usePipelineStatusCheck } from '@/components/hooks/usePipelineStatusCheck'
+import { usePipelineStatusCheck } from '@/components/hooks/check-pipeline-status'
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 
 export function PipelineItem({ datasetId }: { datasetId: string }) {
