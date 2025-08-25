@@ -5,6 +5,16 @@ import { Mail, User, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+export interface DatasetCardProps {
+  dataset_id: string
+  dataset_name: string
+  description: string
+  useremail: string
+  username: string
+  updated_at: string
+  pulled_from_pipeline: boolean
+}
+
 export function DatasetCard({
   dataset_id,
   dataset_name,
@@ -13,16 +23,8 @@ export function DatasetCard({
   username,
   updated_at,
   pulled_from_pipeline,
+}: DatasetCardProps) {
   
-}: {
-  dataset_id: string
-  dataset_name: string
-  description: string | null | undefined
-  useremail: string
-  username: string
-  updated_at: string
-  pulled_from_pipeline: boolean
-}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
