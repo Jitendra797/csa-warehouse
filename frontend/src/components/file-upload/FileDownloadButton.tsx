@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "../hooks/use-toast";
 
 export interface FileDownloadButtonProps extends Omit<ButtonProps, 'onClick'> {
-    fileID: string | undefined; // Allow undefined for cases where fileID is not yet available
+    fileID: string | null;
     downloadName: string;
     accessToken: string;
     children?: React.ReactNode; // Replace buttonText with children
