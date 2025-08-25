@@ -33,6 +33,7 @@ export interface DataTableProps<TData, TValue> {
   data: TData[];
   isLoading?: boolean;
   showToolbar?: boolean;
+  showPagination?: boolean;
   currentPage?: number;
   pageSize?: number;
   totalRows?: number;
@@ -45,6 +46,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading = false,
   showToolbar = false,
+  showPagination = false,
   currentPage = 0,
   pageSize = 10,
   totalRows = 0,
@@ -149,13 +151,15 @@ export function DataTable<TData, TValue>({
           </Table>
         )}
       </div>
-      <DataTablePagination 
-        table={table} 
-        pageSizeOptions={[5, 10, 20]}
-        onPageSizeChange={onPageSizeChange}
-        onPageChange={onPageChange}
-        totalRows={totalRows}
-      />
+      {showPagination && (
+        <DataTablePagination 
+          table={table} 
+          pageSizeOptions={[5, 10, 20]}
+          onPageSizeChange={onPageSizeChange}
+          onPageChange={onPageChange}
+          totalRows={totalRows}
+        />
+      )}
     </div>
   );
 } 
