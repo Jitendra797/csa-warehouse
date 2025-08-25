@@ -36,8 +36,14 @@ import {
         menus: [
             {
                 href: "/dashboard",
-                label: "Dashboard",
+                label: "Dashboards",
                 icon: Grid,
+                submenus: [
+                    {
+                        href: "/dashboard/kisanmitra",
+                        label: "Kisanmitra",
+                    },
+                ]
             },
             {
                 href: "/datastore",
@@ -60,16 +66,16 @@ import {
             },
             {
                 href:"/pipeline",
-                label: "Pipeline",
+                label: "Pipeline Management",
                 icon: Workflow,
                 submenus: [
                     {
                         href: "/pipeline/logstatistics",
-                        label: "Log Statistics",
+                        label: "Pipeline Statistics",
                     },
                     {
                         href: "/pipeline/runlogs",
-                        label: "Run Logs",
+                        label: "Pipelines",
                     },
                 ]
             },
