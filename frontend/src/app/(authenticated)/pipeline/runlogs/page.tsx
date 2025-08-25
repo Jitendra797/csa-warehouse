@@ -5,7 +5,7 @@ import { ContentLayout } from '@/components/admin-panel/content-layout'
 
 export default function RunLogs() {
   return (
-    <ContentLayout title="Run Logs">
+    <ContentLayout title="Pipelines">
       <div className="h-full flex flex-col p-6">
       <div className="relative mb-8">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

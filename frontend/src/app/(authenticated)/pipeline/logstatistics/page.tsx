@@ -25,7 +25,7 @@ const data = [
 
 export default function LogStatistics() {
   return (
-    <ContentLayout title="Log Statistics">
+    <ContentLayout title="Pipeline Statistics">
       <div className="h-full flex flex-col space-y-4 p-4">
         <div className="relative p-4 shrink-0">
           <Search className="absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
