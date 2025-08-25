@@ -48,8 +48,16 @@ export function DatasetCard({
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
           {description ? description : "No description"}
         </CardDescription>
-        <p className="text-sm text-muted-foreground">
-          {pulled_from_pipeline ? "Pipeline Run on " + formatDate(updated_at) : "Last Updated on " + formatDate(updated_at)}
+        <p className="text-sm font-semibold text-foreground py-2">
+          {pulled_from_pipeline ? (
+            <>
+              <span className="font-semibold">Pipeline Run on</span> {formatDate(updated_at)}
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">Last Updated on</span> {formatDate(updated_at)}
+            </>
+          )}
         </p>
       </CardHeader>
       <CardContent className="pt-0 flex-1 flex flex-col">
