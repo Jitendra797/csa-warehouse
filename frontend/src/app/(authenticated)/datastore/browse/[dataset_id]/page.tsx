@@ -17,20 +17,15 @@ export default function DatasetDetails() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(0)
-    const [pageSize, setPageSize] = useState(10)
-    const [totalRows, setTotalRows] = useState(0)
-
-    const fetchDatasetRows = useCallback(async (page: number, size: number) => {
+    const fetchDatasetRows = useCallback(async () => {
         try {
             setLoading(true)
             setError(null)
             
             const request: GetDatasetByIdRequest = {
                 dataset_id: dataset_id,
-                page_number: page,
-                limit: size
+                page_number: 0,
+                limit: 10
             }
             
             const response = await getDatasetByIdEndpointGetDatasetByIdPost({
@@ -40,7 +35,6 @@ export default function DatasetDetails() {
             if (response.data) {
                 const responseData: GetDatasetByIdDetailedResponse = response.data
                 setDatasetData(responseData)
-                setTotalRows(responseData.record_count)
             } else {
                 throw new Error('Failed to fetch dataset rows')
             }
@@ -54,20 +48,9 @@ export default function DatasetDetails() {
 
     useEffect(() => {
         if (dataset_id) {
-            fetchDatasetRows(currentPage, pageSize)
+            fetchDatasetRows()
         }
-    }, [dataset_id, currentPage, pageSize, fetchDatasetRows])
-
-    // Handle page size change
-    const handlePageSizeChange = (newPageSize: number) => {
-        setPageSize(newPageSize)
-        setCurrentPage(0) // Reset to first page when page size changes
-    }
-
-    // Handle page change
-    const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage)
-    }
+    }, [dataset_id, fetchDatasetRows])
 
     // Generate columns dynamically based on the first row of data
     const generateColumns = (data: Record<string, unknown>[]): ColumnDef<Record<string, unknown>>[] => {
@@ -127,21 +110,70 @@ export default function DatasetDetails() {
             <div className="h-full flex flex-col p-6 space-y-6">
                 {datasetData && (
                     <>
-                        <div className="flex flex-col gap-2">
-                            <h4 className="font-bold">{datasetData.dataset_information.dataset_name}</h4>
-                            <p className="text-sm text-muted-foreground">By {datasetData.dataset_information.user_name}</p>
-                            <p className="text-sm text-muted-foreground">{datasetData.dataset_information.description}</p>
+                        <div className="space-y-6">
+                            {/* Dataset Name */}
+                            <div>
+                                <h2 className="text-2xl font-bold">{datasetData.dataset_information.dataset_name}</h2>
+                            </div>
+
+                            {/* Description - Max 2 lines */}
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-semibold">Description</h3>
+                                <p className="text-base leading-relaxed line-clamp-2">
+                                    {datasetData.dataset_information.description || "No description available"}
+                                </p>
+                            </div>
+
+                            {/* Dataset Type, Created By, and Update Time in a row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Dataset Type */}
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-semibold">Dataset Type</h3>
+                                    <p className="text-base">
+                                        {datasetData.dataset_information.dataset_type || "Not specified"}
+                                    </p>
+                                </div>
+
+                                {/* User Information */}
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-semibold">{datasetData.dataset_information.pulled_from_pipeline ? "Pipeline Run By" : "Dataset Uploaded By"}</h3>
+                                    <div className="space-y-1">
+                                        <p className="text-base text-muted-foreground">{datasetData.dataset_information.user_email}</p>
+                                    </div>
+                                </div>
+
+                                {/* Last Updated Information */}
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-semibold">
+                                        {datasetData.dataset_information.pulled_from_pipeline ? "Pipeline Last Run" : "Dataset Updated At"}
+                                    </h3>
+                                    <p className="text-base">
+                                        {new Date(datasetData.dataset_information.updated_at).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <span className="text-lg font-semibold">Tags:</span>
+                                    {datasetData.dataset_information.tags && datasetData.dataset_information.tags.length > 0 ? (
+                                        datasetData.dataset_information.tags.map((tag, index) => (
+                                            <Badge key={index} variant="secondary" className="text-sm px-3 py-1">
+                                                {tag}
+                                            </Badge>
+                                        ))
+                                    ) : (
+                                        <span className="text-base text-muted-foreground">-</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                         <div className="flex-1">
                             <DataTable 
                                 columns={columns}
                                 data={datasetData.data}
                                 isLoading={loading}
-                                currentPage={currentPage}
-                                pageSize={pageSize}
-                                totalRows={totalRows}
-                                onPageSizeChange={handlePageSizeChange}
-                                onPageChange={handlePageChange}
                             />
                         </div>
                     </>
