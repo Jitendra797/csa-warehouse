@@ -10,14 +10,18 @@ client = MongoClient(MONGO_URI)
 db = client["fastapi_db"]
 
 users_collection = db["users"]
+
+# Collection for data from ERP and user 
 datasets_collection = db["datasets"]
-datasets_information_collection = db["datasets-information"]
 
-# New collection for pipeline status
-pipeline_status = db["pipelineStatus"]
+# Collection for dataset information 
+dataset_information_collection = db["datasets_information"]
 
-# New collection for files
-files_collection = db["files"]
+# Collection for files
+files = db["files"]
 
-# New collection for pipelines
+# Collection for pipelines
 pipelines_collection = db["pipelines"] 
+
+# Pipeline statu
+pipeline_status = db["pipeline_status"]

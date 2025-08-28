@@ -1,7 +1,7 @@
 import threading
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 from app.utils.erp import pull_dataset
 from app.services.storage.mongodb_service import store_to_mongodb
@@ -12,7 +12,7 @@ from app.db.database import pipeline_status, datasets_collection, pipelines_coll
 tasks: Dict[str, Dict[str, Any]] = {}
 
 class TaskRunner(LoggerMixin):
-    def run_pipeline_task(self, dataset_id: str, dataset_name: str, user_id: str, username: str, exec_id: str):
+    def run_pipeline_task(self, dataset_id: str, dataset_name: str, user_id: str, username: str, exec_id: str) -> None:
         self.logger.info(f"[Thread: {threading.current_thread().name}] Starting task {exec_id} for dataset {dataset_id}")
 
         # Add initial "running" entry to pipeline history
@@ -70,9 +70,6 @@ class TaskRunner(LoggerMixin):
 
 
 def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, user_id: str):
-    """
-    Add or update a pipeline execution history entry (no duplicates for the same exec_id).
-    """
     try:
         current_time = datetime.now(timezone.utc).isoformat()
 
@@ -124,8 +121,7 @@ def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, us
 
 task_runner = TaskRunner()
 
-
-def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str) -> tuple[dict, str]:
+def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str) -> Tuple[dict, str]:
     exec_id = str(uuid.uuid4())
     current_time = datetime.now(timezone.utc).isoformat()
 
@@ -157,14 +153,13 @@ def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str)
 
     # Run task in background thread
     thread = threading.Thread(
-        target=task_runner.run_pipeline_task,
-        args=(dataset_id, dataset_name, user_id, username, exec_id),
-        name=f"TaskThread-{exec_id[:8]}"
+        target = task_runner.run_pipeline_task,
+        args = (dataset_id, dataset_name, user_id, username, exec_id),
+        name = f"TaskThread-{exec_id[:8]}"
     )
     thread.start()
 
     return tasks[exec_id], exec_id
-
 
 def get_task_status(dataset_id: str, user_id: str) -> Dict[str, Any]:
     # Find the dataset (no longer user-specific)
