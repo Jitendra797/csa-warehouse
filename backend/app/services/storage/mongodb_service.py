@@ -1,338 +1,338 @@
-import math
-import uuid
+import math 
+from uuid import uuid4
 from datetime import datetime, timezone
-import pandas as pd
-from typing import List
-from app.db.database import datasets_collection, datasets_information_collection
+from typing import Optional, List, Dict, Any, Union
+from pymongo.collection import Collection
+from app.schemas.models import CreateDatasetInformationRequest
+from app.db.database import datasets_collection, dataset_information_collection
 
+def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, dataset_records: List[Dict[str, Any]], user_email: str = "") -> Dict[str, Any]: 
+    current_time = datetime.now(timezone.utc).isoformat()
 
-def store_to_mongodb(pipeline_id: str, username: str, user_email: str, dataset_df: List[dict]) -> dict:
-    # Generate UUID for the dataset
-    dataset_uuid = str(uuid.uuid4())
+    # First check if dataset_id already exists in datasets_collection
+    existing_data_doc = datasets_collection.find_one({"_id": dataset_id})
+    
+    if existing_data_doc:
+        # Update existing dataset data
+        columns = list(dataset_records[0].keys()) if dataset_records else []
+        
+        datasets_collection.update_one(
+            {"_id": dataset_id},
+            {
+                "$set": {
+                    "data": dataset_records,
+                    "columns": columns,
+                    "record_count": len(dataset_records)
+                }
+            }
+        )
+        
+        # Check if dataset information exists for this dataset_id
+        existing_info = dataset_information_collection.find_one({"dataset_id": dataset_id})
+        
+        if existing_info:
+            # Update dataset information 
+            dataset_information_collection.update_one(
+                {"_id": existing_info["_id"]},
+                {
+                    "$set": {
+                        "updated_at": current_time,
+                        "pulled_from_pipeline": True
+                    }
+                }
+            )
+            
+            # Add user_id, username, and email to arrays (using separate addToSet operations)
+            if user_id not in existing_info.get("user_id", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"user_id": user_id}}
+                )
+            if username not in existing_info.get("username", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"username": username}}
+                )
+            if user_email and user_email not in existing_info.get("user_email", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"user_email": user_email}}
+                )
+        else:
+            # Create new dataset information document for existing data
+            info_doc_id = uuid4().hex
+            dataset_info_doc = {
+                "_id": info_doc_id,
+                "dataset_name": dataset_name,
+                "dataset_id": dataset_id,  # Reference to existing datasets_collection doc
+                "file_id": "",
+                "description": "",
+                "tags": [],
+                "dataset_type": "",
+                "permissions": "public",
+                "is_spatial": False,
+                "is_temporal": False,
+                "pulled_from_pipeline": True,
+                "created_at": current_time,
+                "updated_at": current_time,
+                "user_id": [user_id],
+                "username": [username],
+                "user_email": [user_email] if user_email else []
+            }
+            dataset_information_collection.insert_one(dataset_info_doc)
+        
+        return {
+            "id": str(dataset_id),
+            "user_id": user_id,
+            "updated": True,
+            "dataset_id": dataset_id,
+            "dataset_name": dataset_name,
+            "record_count": len(dataset_records),
+            "created_at": existing_info["created_at"] if existing_info else current_time
+        }
 
-    # Store actual data in datasets collection with UUID
-    dataset_doc = {
-        "_id": dataset_uuid,
-        "data": dataset_df,
-        "columns": [],  # Empty array as requested
-        "record_count": len(dataset_df)
-    }
+    else:
+        # Check if dataset information exists by name (in case dataset_id is new but name exists)
+        existing_info = dataset_information_collection.find_one({"dataset_name": dataset_name})
+        
+        if existing_info and existing_info["dataset_id"] != dataset_id:
+            # Dataset name exists but with different ID - update the existing data document
+            columns = list(dataset_records[0].keys()) if dataset_records else []
+            
+            datasets_collection.update_one(
+                {"_id": existing_info["dataset_id"]},
+                {
+                    "$set": {
+                        "data": dataset_records,
+                        "columns": columns,
+                        "record_count": len(dataset_records)
+                    }
+                }
+            )
+            
+            # Update information document
+            dataset_information_collection.update_one(
+                {"_id": existing_info["_id"]},
+                {
+                    "$set": {
+                        "updated_at": current_time,
+                        "pulled_from_pipeline": True
+                    }
+                }
+            )
+            
+            # Add user info using separate addToSet operations
+            if user_id not in existing_info.get("user_id", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"user_id": user_id}}
+                )
+            if username not in existing_info.get("username", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"username": username}}
+                )
+            if user_email and user_email not in existing_info.get("user_email", []):
+                dataset_information_collection.update_one(
+                    {"_id": existing_info["_id"]},
+                    {"$addToSet": {"user_email": user_email}}
+                )
+            
+            return {
+                "id": str(existing_info["dataset_id"]),
+                "user_id": user_id,
+                "updated": True,
+                "dataset_id": existing_info["dataset_id"],
+                "dataset_name": dataset_name,
+                "record_count": len(dataset_records),
+                "created_at": existing_info["created_at"]
+            }
+        else:
+            # Create completely new dataset (both data and information)
+            columns = list(dataset_records[0].keys()) if dataset_records else []
+            
+            dataset_doc = {
+                "_id": dataset_id,  # Use the provided dataset_id
+                "data": dataset_records,
+                "columns": columns,
+                "record_count": len(dataset_records)
+            }
+            
+            datasets_collection.insert_one(dataset_doc)
 
-    # Store metadata in datasets-information collection
-    dataset_info_doc = {
-        "_id": str(uuid.uuid4()),  # Generate new UUID for info collection
-        "dataset_name": f"{pipeline_id}",
-        "description": f"Dataset extracted from pipeline_id: {pipeline_id} for {username}",
-        "permission": "public",
-        "dataset_type": "",
-        "tags": [],
-        "dataset_id": dataset_uuid,  # Reference to the UUID from datasets collection
-        "file_id": None,
-        "is_temporal": False,
-        "is_spatial": False,
-        "pulled_from_pipeline": True,
-        "user_email": user_email,
-        "user_name": username,
-        "user_id": None,  # Keep for backward compatibility but set to None
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "pipeline_id": pipeline_id  # Store the original pipeline_id
-    }
+            # Create new dataset information document
+            info_doc_id = uuid4().hex
+            
+            dataset_info_doc = {
+                "_id": info_doc_id,
+                "dataset_name": dataset_name,
+                "dataset_id": dataset_id,  # Reference to datasets_collection
+                "file_id": "",  # Will be set when file is uploaded
+                "description": "",
+                "tags": [],
+                "dataset_type": "",
+                "permissions": "public",
+                "is_spatial": False,
+                "is_temporal": False,
+                "pulled_from_pipeline": True,
+                "created_at": current_time,
+                "updated_at": current_time,
+                "user_id": [user_id],
+                "username": [username],
+                "user_email": [user_email] if user_email else []
+            }
 
-    # Insert both documents
-    dataset_result = datasets_collection.insert_one(dataset_doc)
-    info_result = datasets_information_collection.insert_one(dataset_info_doc)
+            dataset_information_collection.insert_one(dataset_info_doc)
 
-    return {
-        "inserted_id": str(dataset_result.inserted_id),
-        "dataset_uuid": dataset_uuid,
-        "info_uuid": str(info_result.inserted_id),
-        "record_count": len(dataset_df),
-        "pipeline_id": pipeline_id,
-        "created_at": dataset_info_doc["created_at"]
-    }
+            return {
+                "id": str(dataset_id),
+                "inserted": True,
+                "inserted_at": current_time,
+                "dataset_id": dataset_id,
+                "dataset_name": dataset_name,
+                "record_count": len(dataset_records),
+                "created_at": dataset_info_doc["created_at"] 
+            }
 
-
-def sanitize_document(doc):
-    def sanitize_value(value):
-        if isinstance(value, float):
-            if math.isnan(value) or math.isinf(value):
-                return None  # or use 0.0, depending on your use case
-        elif isinstance(value, dict):
+def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
+    def sanitize_value(value: Any) -> Any:
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            return None
+        if isinstance(value, dict):
             return {k: sanitize_value(v) for k, v in value.items()}
-        elif isinstance(value, list):
+        if isinstance(value, list):
             return [sanitize_value(v) for v in value]
-        return value
+        return value 
 
     doc["_id"] = str(doc["_id"])
     return {k: sanitize_value(v) for k, v in doc.items()}
 
-
-def get_data_from_collection(collection=datasets_collection, limit: int = 9):
+def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     try:
-        documents = collection.find().limit(limit)
-        return [sanitize_document(doc) for doc in documents]
+        if dataset_id:
+            # Fetch dataset metadata
+            info_doc = dataset_information_collection.find_one({
+                "$or": [
+                    {"dataset_id": dataset_id},
+                    {"dataset_name": dataset_id}
+                ]
+            })
+            
+            if not info_doc:
+                return {}
+
+            # Fetch actual dataset rows
+            data_doc = datasets_collection.find_one({"_id": info_doc["dataset_id"]})
+            data_rows: List[Dict[str, Any]] = []
+
+            if data_doc and "data" in data_doc:
+                # Take top 10 rows
+                rows = data_doc["data"][:10] 
+                if rows:
+                    # Take top 10 columns based on the first row
+                    selected_columns = list(rows[0].keys())[:10]
+                    for row in rows:
+                        limited_row = {col: row.get(col) for col in selected_columns}
+                        data_rows.append(limited_row)
+
+            return {
+                "dataset_name": info_doc.get("dataset_name", ""),
+                "dataset_id": info_doc.get("dataset_id"),
+                "file_id": info_doc.get("file_id"),
+                "description": info_doc.get("description", ""),
+                "tags": info_doc.get("tags", []),
+                "dataset_type": info_doc.get("dataset_type", ""),
+                "permissions": info_doc.get("permissions", ""),
+                "is_spatial": info_doc.get("is_spatial", False),
+                "is_temporial": info_doc.get("is_temporial", False),
+                "pulled_from_pipeline": info_doc.get("pulled_from_pipeline", False),
+                "created_at": info_doc.get("created_at"),
+                "updated_at": info_doc.get("updated_at"),
+                "user_id": info_doc.get("user_id", []),
+                "user_name": info_doc.get("user_name", []),
+                "user_name": info_doc.get("user_email", []), 
+                "rows": data_rows
+            }
+
+        else:
+            # Return all datasets metadata without rows
+            cursor = dataset_information_collection.find()
+            info_documents = [sanitize_document(doc) for doc in cursor]
+
+            return [
+                {
+                    "dataset_name": doc.get("dataset_name", ""),
+                    "dataset_id": doc.get("dataset_id"),
+                    "file_id": doc.get("file_id"),
+                    "description": doc.get("description", ""),
+                    "tags": doc.get("tags", []),
+                    "dataset_type": doc.get("dataset_type", ""),
+                    "permissions": doc.get("permissions", ""),
+                    "is_spatial": doc.get("is_spatial", False),
+                    "is_temporial": doc.get("is_temporial", False),
+                    "pulled_from_pipeline": doc.get("pulled_from_pipeline", False),
+                    "created_at": doc.get("created_at"),
+                    "updated_at": doc.get("updated_at"),
+                    "user_id": doc.get("user_id", []),
+                    "user_name": doc.get("user_name", []),
+                    "user_email": doc.get("user_email", []) 
+                }
+                for doc in info_documents
+            ]
+
     except Exception as e:
         raise RuntimeError(f"Error fetching documents: {e}")
-
-
-def get_my_datasets(user_email: str, collection=datasets_collection, limit: int = 9):
+    
+def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: str) -> Dict[str, Any]:
     try:
-        # Query the datasets-information collection for user's datasets
-        documents = datasets_information_collection.find(
-            {"user_email": user_email}).limit(limit)
-        return [sanitize_document(doc) for doc in documents]
-    except Exception as e:
-        raise RuntimeError(f"Error fetching documents: {e}")
-
-
-def get_dataset_by_id(pipeline_id: str, collection=datasets_collection):
-    try:
-        # First, find the dataset information using pipeline_id
-        info_document = datasets_information_collection.find_one(
-            {"pipeline_id": pipeline_id})
-
-        if not info_document:
-            return None
-
-        # This is the UUID from datasets collection
-        dataset_uuid = info_document.get("dataset_id")
-        if not dataset_uuid:
-            return None
-
-        # Now find the actual dataset data using the UUID
-        document = datasets_collection.find_one({"_id": dataset_uuid})
-
-        if not document:
-            return None
-
-        # Combine the information and data
-        combined_doc = {
-            **info_document,
-            "data": document.get("data", []),
-            "columns": document.get("columns", []),
-            "record_count": document.get("record_count", 0)
+        current_time = datetime.now(timezone.utc).isoformat()
+        
+        # Create empty dataset data document first
+        data_doc_id = uuid4().hex
+        dataset_doc = {
+            "_id": data_doc_id,
+            "data": [],
+            "columns": [],
+            "record_count": 0
         }
-
-        return sanitize_document(combined_doc)
-    except Exception as e:
-        raise RuntimeError(f"Error fetching document: {e}")
-
-
-def get_dataset_rows_by_dataset_id(dataset_id: str, offset: int = 0, limit: int = 10, collection=datasets_collection):
-    try:
-        # Find the actual dataset data directly using the dataset_id (UUID)
-        document = datasets_collection.find_one({"_id": dataset_id})
-
-        if not document:
-            return None
-
-        # Get the data array from the document
-        data = document.get("data", [])
-
-        # Apply pagination
-        start_index = offset
-        end_index = start_index + limit
-
-        # Return the paginated portion of the data
-        paginated_data = data[start_index:end_index]
-
-        return paginated_data
-    except Exception as e:
-        raise RuntimeError(f"Error fetching dataset rows: {e}")
-
-
-def get_dataset_rows(pipeline_id: str, offset: int = 0, limit: int = 10, collection=datasets_collection):
-    try:
-        # First, find the dataset information using pipeline_id
-        info_document = datasets_information_collection.find_one(
-            {"pipeline_id": pipeline_id})
-
-        if not info_document:
-            return None
-
-        # This is the UUID from datasets collection
-        dataset_uuid = info_document.get("dataset_id")
-        if not dataset_uuid:
-            return None
-
-        # Now find the actual dataset data using the UUID
-        document = datasets_collection.find_one({"_id": dataset_uuid})
-
-        if not document:
-            return None
-
-        # Get the data array from the document
-        data = document.get("data", [])
-
-        # Apply pagination
-        start_index = offset * limit
-        end_index = start_index + limit
-
-        # Return the paginated portion of the data
-        paginated_data = data[start_index:end_index]
-
-        return paginated_data
-    except Exception as e:
-        raise RuntimeError(f"Error fetching dataset rows: {e}")
-
-
-def update_dataset_in_mongodb(pipeline_id: str, username: str, user_email: str, dataset_df: List[dict]) -> dict:
-    """Update an existing dataset with fresh data and updated timestamps"""
-
-    # First, find the existing dataset information using pipeline_id and user_email
-    existing_info = datasets_information_collection.find_one(
-        {"pipeline_id": pipeline_id, "user_email": user_email})
-
-    if not existing_info:
-        # If no existing info found, create new entries
-        return store_to_mongodb(pipeline_id, username, user_email, dataset_df)
-
-    # This is the UUID from datasets collection
-    dataset_uuid = existing_info.get("dataset_id")
-
-    # Update the actual data in datasets collection
-    dataset_doc = {
-        "data": dataset_df,
-        "columns": [],  # Empty array as requested
-        "record_count": len(dataset_df)
-    }
-
-    dataset_result = datasets_collection.update_one(
-        {"_id": dataset_uuid},
-        {"$set": dataset_doc}
-    )
-
-    # Update metadata in datasets-information collection with updated_at timestamp
-    current_time = datetime.now(timezone.utc).isoformat()
-    info_update_doc = {
-        "updated_at": current_time
-    }
-
-    info_result = datasets_information_collection.update_one(
-        {"pipeline_id": pipeline_id, "user_email": user_email},
-        {"$set": info_update_doc}
-    )
-
-    return {
-        "updated_id": dataset_uuid,
-        "record_count": len(dataset_df),
-        "pipeline_id": pipeline_id,
-        "updated_at": current_time,
-        "modified_count": dataset_result.modified_count,
-        "info_modified_count": info_result.modified_count
-    }
-
-
-def create_dataset_information(dataset_info_data: dict) -> dict:
-    """
-    Create a new dataset information entry in the datasets-information collection.
-
-    Args:
-        dataset_info_data: Dictionary containing dataset information fields
-
-    Returns:
-        Dictionary with the result of the operation
-    """
-    try:
-        from datetime import datetime, timezone
-
-        # Generate UUID for the dataset information
-        info_uuid = str(uuid.uuid4())
-
-        # Prepare the document with current timestamps
+        
+        datasets_collection.insert_one(dataset_doc)
+        
+        # Create dataset information document
+        info_doc_id = uuid4().hex
         dataset_info_doc = {
-            "_id": info_uuid,
-            "dataset_name": dataset_info_data["dataset_name"],
-            "description": dataset_info_data.get("description", ""),
-            "permission": dataset_info_data["permission"],
-            "dataset_type": dataset_info_data["dataset_type"],
-            "tags": dataset_info_data.get("tags", []),
-            "dataset_id": dataset_info_data["dataset_id"],
-            "file_id": dataset_info_data["file_id"],
-            "is_temporal": dataset_info_data["is_temporal"],
-            "is_spatial": dataset_info_data["is_spatial"],
-            "pulled_from_pipeline": dataset_info_data.get("pulled_from_pipeline", False),
-            "user_email": dataset_info_data["user_email"],
-            "user_name": dataset_info_data["user_name"],
-            "user_id": dataset_info_data.get("user_id"),
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "pipeline_id": dataset_info_data.get("pipeline_id")
+            "_id": info_doc_id,
+            "dataset_name": request.dataset_name,
+            "dataset_id": data_doc_id,  # Reference to datasets_collection
+            "file_id": request.file_id,
+            "description": request.description,
+            "tags": request.tags,
+            "dataset_type": request.dataset_type,
+            "permissions": request.permission,
+            "is_spatial": request.is_spatial,
+            "is_temporal": request.is_temporal,
+            "pulled_from_pipeline": False,
+            "created_at": current_time,
+            "updated_at": current_time,
+            "user_id": [request.user_id],
+            "username": [request.user_name],
+            "user_email": [request.user_email] if hasattr(request, 'user_email') and request.user_email else []
         }
 
-        # Insert the document into the datasets-information collection
-        result = datasets_information_collection.insert_one(dataset_info_doc)
+        # Insert the information document
+        dataset_information_collection.insert_one(dataset_info_doc)
 
-        if result.inserted_id:
-            return {
-                "success": True,
-                "message": "Dataset information created successfully",
-                "info_uuid": str(result.inserted_id),
-                "created_at": dataset_info_doc["created_at"]
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to create dataset information"
-            }
-
+        return {
+            "success": True,
+            "dataset_doc_id": data_doc_id,
+            "dataset_id": data_doc_id,
+            "message": "Dataset information created successfully",
+            "created_at": current_time,
+            "updated_at": current_time
+        }
+        
     except Exception as e:
         return {
             "success": False,
-            "message": f"Error creating dataset information: {str(e)}"
-        }
-
-
-def create_file_information(file_data: dict) -> dict:
-    """
-    Create a new file information entry in the files collection.
-
-    Args:
-        file_data: Dictionary containing file information fields
-
-    Returns:
-        Dictionary with the result of the operation
-    """
-    try:
-        from datetime import datetime, timezone
-
-        # Generate UUID for the file
-        file_uuid = str(uuid.uuid4())
-
-        # Prepare the document with current timestamps
-        file_doc = {
-            "_id": file_uuid,
-            "file_ext": file_data["file_ext"],
-            "file_name": file_data["file_name"],
-            "file_size": file_data["file_size"],
-            "file_type": file_data["file_type"],
-            "file_url": file_data["file_url"],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-
-        # Import the files collection
-        from app.db.database import files_collection
-
-        # Insert the document into the files collection
-        result = files_collection.insert_one(file_doc)
-
-        if result.inserted_id:
-            return {
-                "success": True,
-                "message": "File information created successfully",
-                "file_uuid": str(result.inserted_id),
-                "created_at": file_doc["created_at"]
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to create file information"
-            }
-
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"Error creating file information: {str(e)}"
+            "message": f"Failed to create dataset information: {str(e)}"
         }
