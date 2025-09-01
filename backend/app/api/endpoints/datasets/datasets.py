@@ -48,9 +48,9 @@ async def create_dataset(request: CreateDatasetInformationRequest) -> CreateData
             "temporal_granularities": request.temporal_granularities or [], 
             "spatial_granularities": request.spatial_granularities or [],
             "pulled_from_pipeline": False,
-            "user_email": request.user_email,
-            "user_name": request.user_name,
-            "user_id": request.user_id,
+            "user_email": [request.user_email],
+            "user_name": [request.user_name],
+            "user_id": [request.user_id],
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }

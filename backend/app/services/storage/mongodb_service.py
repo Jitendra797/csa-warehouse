@@ -6,7 +6,7 @@ from pymongo.collection import Collection
 from app.schemas.models import CreateDatasetInformationRequest
 from app.db.database import datasets_collection, dataset_information_collection
 
-def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, dataset_records: List[Dict[str, Any]], user_email: str = "") -> Dict[str, Any]: 
+def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str, dataset_records: List[Dict[str, Any]]) -> Dict[str, Any]: 
     current_time = datetime.now(timezone.utc).isoformat()
 
     # First check if dataset_id already exists in datasets_collection
@@ -76,14 +76,14 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "created_at": current_time,
                 "updated_at": current_time,
                 "user_id": [user_id],
-                "username": [username],
+                "user_name": [username],
                 "user_email": [user_email] if user_email else []
             }
             dataset_information_collection.insert_one(dataset_info_doc)
         
         return {
             "id": str(dataset_id),
-            "user_id": user_id,
+            "user_id": [user_id],
             "updated": True,
             "dataset_id": dataset_id,
             "dataset_name": dataset_name,
@@ -178,7 +178,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "created_at": current_time,
                 "updated_at": current_time,
                 "user_id": [user_id],
-                "username": [username],
+                "user_name": [username],
                 "user_email": [user_email] if user_email else []
             }
 
@@ -207,38 +207,30 @@ def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     doc["_id"] = str(doc["_id"])
     return {k: sanitize_value(v) for k, v in doc.items()}
 
-def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     try:
         if dataset_id:
-            # Fetch dataset metadata
-            info_doc = dataset_information_collection.find_one({
-                "$or": [
-                    {"dataset_id": dataset_id},
-                    {"dataset_name": dataset_id}
-                ]
-            })
-            
+            info_doc = dataset_information_collection.find_one({"_id": dataset_id})
             if not info_doc:
                 return {}
 
-            # Fetch actual dataset rows
+            if user_id and user_id not in info_doc.get("user_id", []):
+                return {}
+
             data_doc = datasets_collection.find_one({"_id": info_doc["dataset_id"]})
             data_rows: List[Dict[str, Any]] = []
 
             if data_doc and "data" in data_doc:
-                # Take top 10 rows
-                rows = data_doc["data"][:10] 
+                rows = data_doc["data"][:10]
                 if rows:
-                    # Take top 10 columns based on the first row
                     selected_columns = list(rows[0].keys())[:10]
                     for row in rows:
-                        limited_row = {col: row.get(col) for col in selected_columns}
-                        data_rows.append(limited_row)
+                        data_rows.append({col: row.get(col) for col in selected_columns})
 
             return {
                 "dataset_name": info_doc.get("dataset_name", ""),
                 "dataset_id": info_doc.get("dataset_id"),
-                "file_id": info_doc.get("file_id"),
+                "file_id": info_doc.get("file_id", ""),
                 "description": info_doc.get("description", ""),
                 "tags": info_doc.get("tags", []),
                 "dataset_type": info_doc.get("dataset_type", ""),
@@ -248,22 +240,36 @@ def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str
                 "pulled_from_pipeline": info_doc.get("pulled_from_pipeline", False),
                 "created_at": info_doc.get("created_at"),
                 "updated_at": info_doc.get("updated_at"),
-                "user_id": info_doc.get("user_id", []),
-                "user_name": info_doc.get("user_name", []),
-                "user_name": info_doc.get("user_email", []), 
+                "user_id": info_doc.get("user_id") or [],
+                "user_name": info_doc.get("user_name") or [],
+                "user_email": info_doc.get("user_email") or [],
                 "rows": data_rows
             }
 
         else:
-            # Return all datasets metadata without rows
-            cursor = dataset_information_collection.find()
+            query = {}
+            if user_id:
+                query["user_id"] = user_id
+
+            cursor = dataset_information_collection.find(query)
             info_documents = [sanitize_document(doc) for doc in cursor]
 
-            return [
-                {
+            results = []
+            for doc in info_documents:
+                data_doc = datasets_collection.find_one({"_id": doc["dataset_id"]})
+                data_rows: List[Dict[str, Any]] = []
+
+                if data_doc and "data" in data_doc:
+                    rows = data_doc["data"][:10]
+                    if rows:
+                        selected_columns = list(rows[0].keys())[:10]
+                        for row in rows:
+                            data_rows.append({col: row.get(col) for col in selected_columns})
+
+                results.append({
                     "dataset_name": doc.get("dataset_name", ""),
                     "dataset_id": doc.get("dataset_id"),
-                    "file_id": doc.get("file_id"),
+                    "file_id": doc.get("file_id", ""),
                     "description": doc.get("description", ""),
                     "tags": doc.get("tags", []),
                     "dataset_type": doc.get("dataset_type", ""),
@@ -273,17 +279,18 @@ def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str
                     "pulled_from_pipeline": doc.get("pulled_from_pipeline", False),
                     "created_at": doc.get("created_at"),
                     "updated_at": doc.get("updated_at"),
-                    "user_id": doc.get("user_id", []),
-                    "user_name": doc.get("user_name", []),
-                    "user_email": doc.get("user_email", []) 
-                }
-                for doc in info_documents
-            ]
+                    "user_id": doc.get("user_id") or [],
+                    "user_name": doc.get("user_name") or [],
+                    "user_email": doc.get("user_email") or [],
+                    "rows": data_rows
+                })
+            
+            return results
 
     except Exception as e:
         raise RuntimeError(f"Error fetching documents: {e}")
     
-def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: str) -> Dict[str, Any]:
+def create_manual_dataset(request: CreateDatasetInformationRequest) -> Dict[str, Any]:
     try:
         current_time = datetime.now(timezone.utc).isoformat()
         
@@ -303,7 +310,7 @@ def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: 
         dataset_info_doc = {
             "_id": info_doc_id,
             "dataset_name": request.dataset_name,
-            "dataset_id": data_doc_id,  # Reference to datasets_collection
+            "dataset_id": data_doc_id,
             "file_id": request.file_id,
             "description": request.description,
             "tags": request.tags,
@@ -315,8 +322,8 @@ def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: 
             "created_at": current_time,
             "updated_at": current_time,
             "user_id": [request.user_id],
-            "username": [request.user_name],
-            "user_email": [request.user_email] if hasattr(request, 'user_email') and request.user_email else []
+            "user_name": [request.user_name],
+            "user_email": [request.user_email]
         }
 
         # Insert the information document

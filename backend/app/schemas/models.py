@@ -44,6 +44,7 @@ class DatasetDetail(BaseModel):
     updated_at: datetime = Field(..., description = "Timestamp when the dataset was last updated")
     user_id: List[str] = Field(..., description = "List of user IDs associated with the dataset")
     user_name: List[str] = Field(..., description = "List of usernames associated with the dataset")
+    user_email: List[str] = Field(..., description = "List of user emails associated with the dataset") 
     rows: List[Dict[str, Any]] = Field(..., description = "Preview of dataset records (top 10 rows & columns)")
 
 class DatasetInfoResponse(BaseModel):
@@ -70,7 +71,8 @@ class ResponseGetPipelines(BaseModel):
 class RunPipelineRequest(BaseModel):
     pipeline_id: str = Field(..., description = "Unique identifier of the pipeline to run")
     pipeline_name: str = Field(..., description = "Name of the pipeline")
-    username: str = Field(..., description = "Username of the user executing the pipeline")
+    user_id: str = Field("CSAAdmin", description = "User ID of the user executing the pipeline")
+    user_name: str = Field(..., description = "Username of the user executing the pipeline")
     user_email: str = Field(..., description = "Email of the user executing the pipeline")
 
 class RunPipelineResponse(BaseModel):
