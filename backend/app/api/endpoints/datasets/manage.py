@@ -2,11 +2,11 @@ from fastapi import APIRouter
 
 manage_router = APIRouter()
 
-@manage_router.get("/dataset/{user_id}")
-def get_user_datasets():
-    return {
-        "message": "will return all user datasets"
-    }
+# @manage_router.get("/dataset/{user_id}")
+# def get_user_datasets():
+#     return {
+#         "message": "will return all user datasets"
+#     }
 
 @manage_router.put("/datasets/{dataset_id}/edit")
 def edit_dataset(dataset_id):

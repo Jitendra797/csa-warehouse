@@ -12,7 +12,9 @@ from app.db.database import pipeline_status, datasets_collection, pipelines_coll
 tasks: Dict[str, Dict[str, Any]] = {}
 
 class TaskRunner(LoggerMixin):
-    def run_pipeline_task(self, dataset_id: str, dataset_name: str, user_id: str, username: str, exec_id: str) -> None:
+    def run_pipeline_task(
+        self, dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str, exec_id: str
+    ) -> None:
         self.logger.info(f"[Thread: {threading.current_thread().name}] Starting task {exec_id} for dataset {dataset_id}")
 
         # Add initial "running" entry to pipeline history
@@ -25,9 +27,8 @@ class TaskRunner(LoggerMixin):
 
             dataset_json = dataset.to_dict(orient="records")
 
-            # Store/update dataset in MongoDB using the existing service
-            # This handles both new inserts and updates automatically
-            result = store_to_mongodb(dataset_id, dataset_name, user_id, username, dataset_json)
+            # Store/update dataset in MongoDB
+            result = store_to_mongodb(dataset_id, dataset_name, user_id, username, user_email, dataset_json)
             
             # Get the actual dataset document ID from the result
             dataset_doc_id = result.get("id") 
@@ -49,6 +50,8 @@ class TaskRunner(LoggerMixin):
                         "dataset_id": dataset_id,
                         "name": dataset_name,
                         "user_id": user_id,
+                        "user_name": username,
+                        "user_email": user_email,
                         "exec_id": exec_id,
                         "status": "completed"
                     }
@@ -121,11 +124,11 @@ def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, us
 
 task_runner = TaskRunner()
 
-def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str) -> Tuple[dict, str]:
+def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str) -> Tuple[dict, str]:
     exec_id = str(uuid.uuid4())
     current_time = datetime.now(timezone.utc).isoformat()
 
-    # Check if dataset already exists (not user-specific anymore)
+    # Check if dataset already exists
     existing_dataset = datasets_collection.find_one({"dataset_id": dataset_id})
     
     if existing_dataset:
@@ -137,7 +140,9 @@ def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str)
                     "_id": existing_dataset["_id"],
                     "dataset_id": dataset_id,
                     "name": dataset_name,
-                    "user_id": user_id,  # Current user running the pipeline
+                    "user_id": user_id,  
+                    "user_name": username,
+                    "user_email": user_email,
                     "exec_id": exec_id,
                     "status": "running"
                 }
@@ -148,21 +153,23 @@ def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str)
     tasks[exec_id] = {
         "status": "running",
         "executed_at": current_time,
-        "user": user_id
+        "user_id": user_id,
+        "user_name": username,
+        "user_email": user_email
     }
 
     # Run task in background thread
     thread = threading.Thread(
-        target = task_runner.run_pipeline_task,
-        args = (dataset_id, dataset_name, user_id, username, exec_id),
-        name = f"TaskThread-{exec_id[:8]}"
+        target=task_runner.run_pipeline_task,
+        args=(dataset_id, dataset_name, user_id, username, user_email, exec_id),
+        name=f"TaskThread-{exec_id[:8]}"
     )
     thread.start()
 
     return tasks[exec_id], exec_id
 
+
 def get_task_status(dataset_id: str, user_id: str) -> Dict[str, Any]:
-    # Find the dataset (no longer user-specific)
     dataset_doc = datasets_collection.find_one({"dataset_id": dataset_id})
     
     if not dataset_doc:
@@ -171,16 +178,14 @@ def get_task_status(dataset_id: str, user_id: str) -> Dict[str, Any]:
             "message": "No dataset found with this ID."
         }
     
-    # Check if the user has access to this dataset
-    if user_id not in dataset_doc.get("user_id", []):
+    # Check if the requesting user matches the dataset owner
+    if dataset_doc.get("user_id") != user_id:
         return {
             "status": "not authorized",
             "message": "You don't have access to this dataset."
         }
     
-    # Look up pipeline status using the same ID as the dataset document
     result = pipeline_status.find_one({"_id": dataset_doc["_id"]})
-
     if not result:
         return {
             "status": "not found",
@@ -195,11 +200,10 @@ def get_task_status(dataset_id: str, user_id: str) -> Dict[str, Any]:
 
 def get_user_datasets(user_id: str) -> Dict[str, Any]:
     """
-    Get all datasets that a specific user has access to
+    Get all datasets that a specific user owns
     """
     try:
-        # Find all datasets where user_id is in the user_id list
-        cursor = datasets_collection.find({"user_id": {"$in": [user_id]}})
+        cursor = datasets_collection.find({"user_id": user_id})
         
         documents = []
         for doc in cursor:
@@ -208,7 +212,8 @@ def get_user_datasets(user_id: str) -> Dict[str, Any]:
                 "dataset_id": doc.get("dataset_id"),
                 "dataset_name": doc.get("dataset_name"),
                 "user_id": doc.get("user_id"),
-                "username": doc.get("username"),
+                "user_name": doc.get("user_name"),
+                "user_email": doc.get("user_email"),
                 "description": doc.get("description", ""),
                 "created_at": doc.get("created_at"),
                 "updated_at": doc.get("updated_at"),
@@ -216,9 +221,7 @@ def get_user_datasets(user_id: str) -> Dict[str, Any]:
                 "pulled_from_pipeline": doc.get("pulled_from_pipeline", False)
             })
         
-        return {
-            "datasets": documents
-        }
+        return {"datasets": documents}
         
     except Exception as e:
         raise RuntimeError(f"Error fetching user datasets: {e}")
