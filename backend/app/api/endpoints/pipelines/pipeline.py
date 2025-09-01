@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-from datetime import datetime
+from fastapi import APIRouter, HTTPException
+from datetime import datetime 
 from app.db.database import pipelines_collection
 from app.schemas.models import (
     RunPipelineRequest,
@@ -16,11 +16,12 @@ run_router = APIRouter()
 @run_router.post("/pipelines/run", response_model=RunPipelineResponse)
 def run_pipeline(request: RunPipelineRequest) -> RunPipelineResponse:
     result, exec_id = submit_task(
-        request.pipeline_id, request.pipeline_name, request.username, request.user_email)
+        dataset_id = request.pipeline_id, dataset_name = request.pipeline_name, 
+        user_id = request.user_id, username = request.user_name, user_email = request.user_email)
 
     status = result.get("status", "running")
     executed_at = result.get("executed_at")
-    user = result.get("user")
+    user = result.get("user_name") 
 
     return RunPipelineResponse(
         status=status,
@@ -36,16 +37,16 @@ def get_pipeline_status(dataset_id: str, exec_id: Optional[str]) -> PipelineStat
     pipeline = pipelines_collection.find_one({"_id": dataset_object_id})
 
     if not pipeline:
-        return PipelineStatusResponse(status="No pipeline with given id")
+        raise HTTPException(status_code = 404, detail = "No pipeline with the given dataset_id")
 
     history = pipeline.get("history")
     if not history:
-        return PipelineStatusResponse(status="No history for the pipeline")
-
-    matching_history = [h for h in history if h["exec_id"] == exec_id]
+        raise HTTPException(status_code = 404, detail = "No history available for the pipeline")
 
     if not matching_history:
-        return PipelineStatusResponse(status="No history is available with the given execution id")
+        raise HTTPException(status_code = 404, detail = "No history available with the given execution id")
+    
+    return PipelineStatusResponse(status=matching_history[0]["status"])
 
     return PipelineStatusResponse(status=matching_history[0]["status"])
 
