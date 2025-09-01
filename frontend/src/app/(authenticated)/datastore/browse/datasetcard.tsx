@@ -54,7 +54,7 @@ export function DatasetCard({
           {dataset_name}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-          {description}
+          {description? description : "No description"}
         </CardDescription>
         <p className="text-sm font-semibold text-foreground py-2">
           {pulled_from_pipeline ? (

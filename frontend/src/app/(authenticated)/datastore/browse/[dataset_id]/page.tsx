@@ -2,15 +2,15 @@
 
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { DataTable } from "@/components/TableView/data-table";
-import {
-  DatasetDetail,
-  DatasetInfoResponse,
-} from "@/lib/hey-api/client/types.gen";
 import { useEffect, useState, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, AlertCircle, Badge } from "lucide-react";
 import { useParams } from "next/navigation";
 import { getDatasetInfoDatasetsDatasetIdGet } from "@/lib/hey-api/client/sdk.gen";
+import {
+  DatasetDetail,
+  DatasetInfoResponse,
+} from "@/lib/hey-api/client/types.gen";
 
 export default function DatasetDetails() {
   const params = useParams();
@@ -111,82 +111,50 @@ export default function DatasetDetails() {
       <div className="h-full flex flex-col p-6 space-y-6">
         {datasetData && (
           <>
-            <div className="space-y-6">
-              {/* Dataset Name */}
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {datasetData.dataset_name}
-                </h2>
-              </div>
-
-              {/* Description - Max 2 lines */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Description</h3>
-                <p className="text-base leading-relaxed line-clamp-2">
-                  {datasetData.description}
-                </p>
-              </div>
-
-              {/* Dataset Type, Created By, and Update Time in a row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Dataset Type */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Dataset Type</h3>
-                  <p className="text-base">{datasetData.dataset_type}</p>
-                </div>
-
-                {/* User Information */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">
-                    {datasetData.pulled_from_pipeline
-                      ? "Pipeline Run By"
-                      : "Dataset Uploaded By"}
-                  </h3>
-                  <div className="space-y-1">
-                    <p className="text-base text-muted-foreground">
-                      {username}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Last Updated Information */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">
-                    {datasetData.pulled_from_pipeline
-                      ? "Pipeline Last Run"
-                      : "Dataset Updated At"}
-                  </h3>
-                  <p className="text-base">
+            <div>
+              <h2 className="text-2xl font-semibold mb-2">
+                {datasetData.dataset_name}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-1">
+                {datasetData.description
+                  ? datasetData.description
+                  : "No description"}
+              </p>
+              <p className="text-sm text-foreground">
+                {datasetData.pulled_from_pipeline ? (
+                  <>
+                    <span className="font-semibold">Pipeline Run By:</span>{" "}
+                    {username}
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold">Dataset Created By:</span>{" "}
+                    {username}
+                  </>
+                )}
+              </p>
+              <p className="text-sm text-foreground">
+                {datasetData.pulled_from_pipeline ? (
+                  <>
+                    <span className="font-semibold">Pipeline Run on:</span>{" "}
                     {new Date(datasetData.updated_at).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-lg font-semibold">Tags:</span>
-                  {datasetData.tags && datasetData.tags.length > 0 ? (
-                    datasetData.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      >
-                        {tag}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-base text-muted-foreground">-</span>
-                  )}
-                </div>
-              </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold">Last Updated on:</span>{" "}
+                    {new Date(datasetData.updated_at).toLocaleString()}
+                  </>
+                )}
+              </p>
             </div>
             <div className="flex-1">
-              <DataTable
-                columns={columns}
-                data={datasetData.rows ?? []}
-                isLoading={loading}
-              />
+              <div className="text-xs">
+                <DataTable
+                  columns={columns}
+                  data={datasetData.rows ?? []}
+                  isLoading={loading}
+                />
+              </div>
             </div>
           </>
         )}
