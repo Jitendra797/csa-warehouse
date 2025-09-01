@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils";
 import {
   MultiSelector,
   MultiSelectorTrigger,
@@ -8,30 +8,35 @@ import {
   MultiSelectorContent,
   MultiSelectorList,
   MultiSelectorItem,
-} from '@/components/ui/multi-select'
+} from "@/components/ui/multi-select";
 
 type LocationColumnsMultiSelectProps = {
-  columns: string[]
-  value: string[]
-  onChange: (values: string[]) => void
-  placeholder?: string
-  disabled?: boolean
-  className?: string
-}
+  columns: string[];
+  value: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+};
 
 export default function LocationColumnsMultiSelect({
   columns,
   value,
   onChange,
-  placeholder = 'Select location columns...'
-  ,
+  placeholder = "Select location columns...",
   disabled = false,
   className,
 }: LocationColumnsMultiSelectProps) {
-  const selectedValues = Array.isArray(value) ? value : []
+  const selectedValues = Array.isArray(value) ? value : [];
 
   return (
-    <div className={cn('relative', disabled && 'pointer-events-none opacity-60', className)}>
+    <div
+      className={cn(
+        "relative",
+        disabled && "pointer-events-none opacity-60",
+        className,
+      )}
+    >
       <MultiSelector
         values={selectedValues}
         onValuesChange={onChange}
@@ -51,7 +56,5 @@ export default function LocationColumnsMultiSelect({
         </MultiSelectorContent>
       </MultiSelector>
     </div>
-  )
+  );
 }
-
-

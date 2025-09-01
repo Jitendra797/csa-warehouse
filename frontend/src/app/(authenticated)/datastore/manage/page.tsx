@@ -1,46 +1,46 @@
-'use client'
-import { Input } from '@/components/ui/input'
-import { Search, Loader2 } from 'lucide-react'
-import { DatasetCard } from './datasetcard'
-import { ContentLayout } from '@/components/admin-panel/content-layout'
-import { useState, useEffect } from 'react'
-import { getMyDatasetsEndpointGetMyDatasetsPost } from '@/lib/hey-api/client/sdk.gen'
-import { GetMyDatasetsRequest, DatasetInformationResponse, DatasetInformation } from '@/lib/hey-api/client/types.gen'
-import { useSession } from 'next-auth/react'
+"use client";
+import { Input } from "@/components/ui/input";
+import { Search, Loader2 } from "lucide-react";
+import { DatasetCard } from "./datasetcard";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
+import { useState, useEffect } from "react";
+import { getUserDatasetsDatasetUserIdGet } from "@/lib/hey-api/client/sdk.gen";
+import {
+  DatasetInformationResponse,
+  DatasetInformation,
+  GetUserDatasetsDatasetUserIdGetResponses,
+} from "@/lib/hey-api/client/types.gen";
+import { useSession } from "next-auth/react";
 
 export default function Manage() {
-  const { data: session } = useSession()
-  const [datasets, setDatasets] = useState<DatasetInformation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: session } = useSession();
+  const [datasets, setDatasets] = useState<DatasetInformation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDatasets = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        const request: GetMyDatasetsRequest = {
-          user_email: session?.user?.email || ''
-        }
-        const response = await getMyDatasetsEndpointGetMyDatasetsPost({
-          body: request
-        })
+        setLoading(true);
+        setError(null);
+        const response = await getUserDatasetsDatasetUserIdGet();
         if (response.data) {
-          const responseData: DatasetInformationResponse = response.data
-          setDatasets(responseData.data)
+          const responseData: GetUserDatasetsDatasetUserIdGetResponses =
+            response.data;
+          setDatasets(responseData.data);
         } else {
-          throw new Error('Failed to fetch datasets')
+          throw new Error("Failed to fetch datasets");
         }
       } catch (err) {
-        console.error('Error fetching datasets:', err)
-        setError('Failed to load datasets. Please try again later.')
+        console.error("Error fetching datasets:", err);
+        setError("Failed to load datasets. Please try again later.");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchDatasets()
-  }, [session?.user?.email])
+    fetchDatasets();
+  }, [session?.user?.email]);
 
   return (
     <ContentLayout title="Manage">
@@ -64,7 +64,7 @@ export default function Manage() {
               key={dataset.dataset_id}
               dataset_id={dataset.dataset_id}
               dataset_name={dataset.dataset_name}
-              description={dataset.description || 'No description'}
+              description={dataset.description || "No description"}
               useremail={dataset.user_email}
               username={dataset.user_name}
               updated_at={dataset.updated_at}
@@ -79,5 +79,5 @@ export default function Manage() {
         )}
       </div>
     </ContentLayout>
-  )
+  );
 }

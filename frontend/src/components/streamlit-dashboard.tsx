@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type StreamlitDashboardProps = {
   src: string;
@@ -11,16 +11,16 @@ type StreamlitDashboardProps = {
 
 const StreamlitDashboard: React.FC<StreamlitDashboardProps> = ({
   src,
-  title = 'Dashboard',
+  title = "Dashboard",
   allowFullScreen = true,
   height,
   className,
   style,
 }) => {
   const containerStyle: React.CSSProperties = {
-    width: '100%',
-    height: height ?? '100vh',
-    overflow: 'hidden',
+    width: "100%",
+    height: height ?? "100vh",
+    overflow: "hidden",
     ...style,
   };
 
@@ -29,7 +29,7 @@ const StreamlitDashboard: React.FC<StreamlitDashboardProps> = ({
       <iframe
         src={src}
         title={title}
-        style={{ width: '100%', height: '100%', border: 'none' }}
+        style={{ width: "100%", height: "100%", border: "none" }}
         allowFullScreen={allowFullScreen}
       />
     </div>
@@ -37,5 +37,3 @@ const StreamlitDashboard: React.FC<StreamlitDashboardProps> = ({
 };
 
 export default StreamlitDashboard;
-
-

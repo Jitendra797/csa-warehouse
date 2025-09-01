@@ -1,18 +1,24 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { formatDate } from '@/lib/utils'
-import { Mail, User, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
+import { Mail, User, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export interface DatasetCardProps {
-  dataset_id: string
-  dataset_name: string
-  description: string
-  pulled_from_pipeline: boolean
-  username: string
-  useremail: string
-  updated_at: string
+  dataset_id: string;
+  dataset_name: string;
+  description: string;
+  pulled_from_pipeline: boolean;
+  usernames: string[];
+  useremails: string[];
+  updated_at: string;
 }
 
 export function DatasetCard({
@@ -20,24 +26,26 @@ export function DatasetCard({
   dataset_name,
   description,
   pulled_from_pipeline,
-  username,
-  useremail,
+  usernames,
+  useremails,
   updated_at,
-  
 }: DatasetCardProps) {
-  
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const usernameslength = usernames.length;
+  const useremailslength = useremails.length;
+  const username = usernames[usernameslength - 1];
+  const useremail = useremails[useremailslength - 1];
 
   const handleOpen = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await router.push(`/datastore/browse/${encodeURIComponent(dataset_id)}`)
+      await router.push(`/datastore/browse/${encodeURIComponent(dataset_id)}`);
     } catch (error) {
-      console.error('Navigation error:', error)
-      setIsLoading(false)
+      console.error("Navigation error:", error);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="bg-background h-[280px] flex flex-col">
@@ -46,23 +54,27 @@ export function DatasetCard({
           {dataset_name}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-          {description ? description : "No description"}
+          {description}
         </CardDescription>
         <p className="text-sm font-semibold text-foreground py-2">
           {pulled_from_pipeline ? (
             <>
-              <span className="font-semibold">Pipeline Run on</span> {formatDate(updated_at)}
+              <span className="font-semibold">Pipeline Run on</span>{" "}
+              {formatDate(updated_at)}
             </>
           ) : (
             <>
-              <span className="font-semibold">Last Updated on</span> {formatDate(updated_at)}
+              <span className="font-semibold">Last Updated on</span>{" "}
+              {formatDate(updated_at)}
             </>
           )}
         </p>
       </CardHeader>
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="flex-1">
-          <p className="text-sm font-semibold text-foreground mb-2">{pulled_from_pipeline ? "Pipeline Run By" : "Dataset Created By"}</p>
+          <p className="text-sm font-semibold text-foreground mb-2">
+            {pulled_from_pipeline ? "Pipeline Run By" : "Dataset Created By"}
+          </p>
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center">
               <User className="w-3 h-3 mr-1.5" />
@@ -74,8 +86,8 @@ export function DatasetCard({
             </p>
           </div>
         </div>
-        <Button 
-          className="w-full mt-4" 
+        <Button
+          className="w-full mt-4"
           onClick={handleOpen}
           disabled={isLoading}
         >
@@ -85,10 +97,10 @@ export function DatasetCard({
               Loading...
             </>
           ) : (
-            'View'
+            "View"
           )}
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

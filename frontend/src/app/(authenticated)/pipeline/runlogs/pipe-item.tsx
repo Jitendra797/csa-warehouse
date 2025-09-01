@@ -1,155 +1,132 @@
-'use client'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { getPipelineStatusPipelineStatusPost, runPipelineRunPipelinePost } from '@/lib/hey-api/client/sdk.gen'
-import { RunPipelineRequest, PipelineStatusRequest, RunPipelineResponse, PipelineStatusResponse } from '@/lib/hey-api/client/types.gen'
-import { useSession } from 'next-auth/react'
-import { usePipelineStatusCheck } from '@/components/hooks/check-pipeline-status'
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  runPipelinePipelinesRunPost,
+  getPipelineStatusPipelineStatusGet,
+} from "@/lib/hey-api/client/sdk.gen";
+import { useSession } from "next-auth/react";
+import { usePipelineStatusCheck } from "@/components/hooks/check-pipeline-status";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import {
+  RunPipelineRequest,
+  RunPipelineResponse,
+  PipelineItem,
+  PipelineStatusResponse,
+} from "@/lib/hey-api/client/types.gen";
 
-export interface HistoryItem {
-  'exec-id': string
-  status: string
-  executed_at: string
-  'user-email': string
-}
+export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
+  const { data: session } = useSession();
+  const username = session?.user?.name || "";
+  const useremail = session?.user?.email || "";
+  const historylength = history.length;
+  const initialStatus =
+    historylength > 0 ? history[historylength - 1]?.status : null;
+  const initialExecId =
+    historylength > 0 ? history[historylength - 1]?.exec_id : null;
+  const [currentStatus, setCurrentStatus] = useState<string | null>(
+    initialStatus,
+  );
+  const [currentExecId, setCurrentExecId] = useState<string | null>(
+    initialExecId,
+  );
 
-export interface PipelineItemProps {
-  dataset_id: string
-  dataset_name: string
-  history: HistoryItem[]
-}
-
-export function PipelineItem({ dataset_id, dataset_name, history }: PipelineItemProps) {
-  const { data: session } = useSession()
-  const [pipelineStatus, setPipelineStatus] = useState<'completed' | 'running' | 'error' | null>(null)
-
-  // Get the most recent status from history
-  const getLatestStatus = () => {
-    if (history.length === 0) return null
-    const latest = history[history.length - 1]
-    return latest.status as 'completed' | 'running' | 'error' | null
-  }
+  const runPipelineRequest: RunPipelineRequest = {
+    pipeline_id: _id,
+    pipeline_name: pipeline_name,
+    username: username,
+    user_email: useremail,
+  };
 
   const runPipeline = async () => {
-    try {
-      const runRequest: RunPipelineRequest = {
-        pipeline_id: dataset_id,
-        username: session?.user?.name || '',
-        user_email: session?.user?.email || '',
-      }
-
-      // Submit the task
-      const response = await runPipelineRunPipelinePost({
-        body: runRequest
-      })
-
-      if (response.data) {
-        const responseData: RunPipelineResponse = response.data
-        setPipelineStatus(responseData.status)
-      }
-    } catch (error) {
-      console.error('Failed to run pipeline:', error)
-      setPipelineStatus('error')
+    const response = await runPipelinePipelinesRunPost({
+      body: runPipelineRequest,
+    });
+    if (response.data) {
+      const responseData: RunPipelineResponse = response.data;
+      setCurrentExecId(responseData.execution_id);
+      setCurrentStatus(responseData.status);
     }
-  }
+  };
 
   const checkPipelineStatus = async () => {
+    if (!currentExecId) return;
+
     try {
-      const requestBody: PipelineStatusRequest = {
-        pipeline_id: dataset_id,
-        user_email: session?.user?.email || '',
-      }
-      const response = await getPipelineStatusPipelineStatusPost({
-        body: requestBody
-      })
+      const response = await getPipelineStatusPipelineStatusGet({
+        query: {
+          dataset_id: _id,
+          exec_id: currentExecId,
+        },
+      });
+
       if (response.data) {
-        const responseData: PipelineStatusResponse = response.data
-        setPipelineStatus(responseData.status)
+        const responseData: PipelineStatusResponse = response.data;
+        const status = responseData.status;
+        setCurrentStatus(status);
       }
     } catch (error) {
-      console.error('Failed to check pipeline status:', error)
+      console.error("Error checking pipeline status:", error);
     }
-  }
+  };
 
-  // Use the custom hook to automatically check pipeline status after 30 seconds
-  usePipelineStatusCheck(pipelineStatus, checkPipelineStatus, dataset_id)
-
-  // Determine current status - prioritize live status over history
-  const currentStatus = pipelineStatus || getLatestStatus()
+  usePipelineStatusCheck(
+    currentStatus as "running" | "completed" | "error" | null,
+    checkPipelineStatus,
+    _id,
+    currentExecId,
+  );
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold">Pipeline: {dataset_name}</h2>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Run Pipeline Button - always visible */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={runPipeline}
-              disabled={currentStatus === 'running'}
-            >
-              Run Pipeline
-            </Button>
-            
-            {/* Status Button - always visible */}
-            {currentStatus === 'running' && (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled
-              >
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin h-4 w-4" />
-                  Running
-                </div>
-              </Button>
-            )}
-            
-            {currentStatus === 'completed' && (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Completed
-                </div>
-              </Button>
-            )}
-            
-            {currentStatus === 'error' && (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled
-              >
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="text-red-500 h-4 w-4" />
-                  Error
-                </div>
-              </Button>
-            )}
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold">Pipeline: {pipeline_name}</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={runPipeline}
+            disabled={currentStatus === "running"}
+          >
+            Run Pipeline
+          </Button>
 
-            {currentStatus === null && (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled
-              >
-                Status
-              </Button>
-            )}
-          </div>
+          {currentStatus === "running" && (
+            <Button variant="secondary" size="sm" disabled>
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin h-4 w-4" />
+                Running
+              </div>
+            </Button>
+          )}
+
+          {currentStatus === "completed" && (
+            <Button variant="secondary" size="sm" disabled>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="text-green-500 h-4 w-4" />
+                Completed
+              </div>
+            </Button>
+          )}
+
+          {currentStatus === "error" && (
+            <Button variant="secondary" size="sm" disabled>
+              <div className="flex items-center gap-2">
+                <AlertCircle className="text-red-500 h-4 w-4" />
+                Error
+              </div>
+            </Button>
+          )}
+
+          {currentStatus === null && (
+            <Button variant="secondary" size="sm" disabled>
+              Status
+            </Button>
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }
-

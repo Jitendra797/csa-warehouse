@@ -54,8 +54,11 @@ export function DataTable<TData, TValue>({
   onPageChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
   const table = useReactTable({
@@ -100,16 +103,16 @@ export function DataTable<TData, TValue>({
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : (
-                            <DataTableColumnHeader
-                              title={String(flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              ))}
-                            />
+                      {header.isPlaceholder ? null : (
+                        <DataTableColumnHeader
+                          title={String(
+                            flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            ),
                           )}
+                        />
+                      )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -124,10 +127,12 @@ export function DataTable<TData, TValue>({
                         key={cell.id}
                         data-state={row.getIsSelected() && "selected"}
                         className="max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis"
-                        title={String(flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        ))}
+                        title={String(
+                          flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          ),
+                        )}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -152,8 +157,8 @@ export function DataTable<TData, TValue>({
         )}
       </div>
       {showPagination && (
-        <DataTablePagination 
-          table={table} 
+        <DataTablePagination
+          table={table}
           pageSizeOptions={[5, 10, 20]}
           onPageSizeChange={onPageSizeChange}
           onPageChange={onPageChange}
@@ -162,4 +167,4 @@ export function DataTable<TData, TValue>({
       )}
     </div>
   );
-} 
+}

@@ -253,7 +253,9 @@ const MultiSelectorTrigger = forwardRef<
               )}
               variant={"secondary"}
             >
-              <span className="truncate max-w-[120px]">{displayValues?.[item] || item}</span>
+              <span className="truncate max-w-[120px]">
+                {displayValues?.[item] || item}
+              </span>
               <button
                 aria-label={`Remove ${displayValues?.[item] || item} option`}
                 aria-roledescription="button to remove option"

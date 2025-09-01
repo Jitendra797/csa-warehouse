@@ -5,8 +5,8 @@ import AdminPanelLayout from "@/components/admin-panel/admin-panel-layout";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'CSA Data Store',
-  description: 'warehouse management system',
+  title: "CSA Data Store",
+  description: "warehouse management system",
 };
 
 const inter = Inter({ subsets: ["latin"] });

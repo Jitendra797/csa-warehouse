@@ -3,12 +3,15 @@
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { 
+import {
   getPresignedUrlGeneratePresignedUrlGet,
   extractCsvDataExtractCsvDataPost,
-  createFileEndpointCreateFilePost
+  createFileEndpointCreateFilePost,
 } from "@/lib/hey-api/client/sdk.gen";
-import { CreateFileResponse, ExtractCsvDataResponse } from "@/lib/hey-api/client/types.gen";
+import {
+  CreateFileResponse,
+  ExtractCsvDataResponse,
+} from "@/lib/hey-api/client/types.gen";
 import React, {
   Dispatch,
   SetStateAction,
@@ -54,17 +57,21 @@ type FileUploaderProps = {
   value: File[] | null;
   reSelect?: boolean;
   onValueChange: (value: File[] | null) => void;
-  onUploadComplete?: (urls: string[], fileData?: {
-    dataset_id: string;
-    file_id: string;
-    columns: string[];
-  }) => void;
+  onUploadComplete?: (
+    urls: string[],
+    fileData?: {
+      dataset_id: string;
+      file_id: string;
+      columns: string[];
+    },
+  ) => void;
   dropzoneOptions: DropzoneOptions;
   orientation?: "horizontal" | "vertical";
   authToken: string;
 };
 
-interface FileUploaderContentProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FileUploaderContentProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   orientation?: "horizontal" | "vertical";
   value?: File[] | null;
   uploadStatus?: FileUploadStatus[];
@@ -165,7 +172,8 @@ export const FileUploader = forwardRef<
           throw new Error("Failed to get presigned URL");
         }
 
-        const presignedUrl = (presignedResponse.data as { upload_url: string })?.upload_url;
+        const presignedUrl = (presignedResponse.data as { upload_url: string })
+          ?.upload_url;
         console.log("Presigned URL response:", presignedUrl);
         console.log("Type of presignedUrl:", typeof presignedUrl);
 
@@ -197,7 +205,7 @@ export const FileUploader = forwardRef<
         }
 
         console.log("CSV extraction response:", extractResponse.data);
-        
+
         // Get the file URL (remove query parameters from presigned URL)
         const fileUrl = presignedUrl.split("?")[0];
 
@@ -218,13 +226,13 @@ export const FileUploader = forwardRef<
 
         const recordData = recordResponse.data as CreateFileResponse;
         console.log("File record data:", recordData);
-        
+
         // Extract dataset_id and columns from the CSV extraction response
         const extractData = extractResponse.data as ExtractCsvDataResponse;
-        const dataset_id = extractData.data?.dataset_id as string || "";
-        const columns = extractData.data?.columns as string[] || [];
+        const dataset_id = (extractData.data?.dataset_id as string) || "";
+        const columns = (extractData.data?.columns as string[]) || [];
         const file_id = recordData?.data?.id || "";
-        
+
         // Return both the file ID and the extracted data
         return {
           file_id,
@@ -295,13 +303,21 @@ export const FileUploader = forwardRef<
             const fileDataArray = await Promise.all(uploadPromises);
             // Filter out any undefined values and extract URLs and file data
             const validFileData = fileDataArray.filter(
-              (data): data is { file_id: string; dataset_id: string; columns: string[] } => 
-                data !== undefined && data.file_id !== undefined && data.file_id !== "",
+              (
+                data,
+              ): data is {
+                file_id: string;
+                dataset_id: string;
+                columns: string[];
+              } =>
+                data !== undefined &&
+                data.file_id !== undefined &&
+                data.file_id !== "",
             );
-            
+
             // Extract URLs for backward compatibility
-            const urls = validFileData.map(data => data.file_id);
-            
+            const urls = validFileData.map((data) => data.file_id);
+
             // Pass both URLs and file data to the callback
             onUploadComplete(urls, validFileData[0]); // For single file upload, pass the first file data
           } catch (error) {
@@ -401,7 +417,14 @@ export const FileUploader = forwardRef<
           setActiveIndex(-1);
         }
       },
-      [value, activeIndex, removeFileFromSet, direction, orientation, dropzoneState],
+      [
+        value,
+        activeIndex,
+        removeFileFromSet,
+        direction,
+        orientation,
+        dropzoneState,
+      ],
     );
 
     useEffect(() => {
@@ -417,21 +440,27 @@ export const FileUploader = forwardRef<
     const childrenWithProps = React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
         if (child.type === FileUploaderContent) {
-          return React.cloneElement(child as React.ReactElement<FileUploaderContentProps>, {
-            orientation,
-            value,
-            uploadStatus,
-            removeFileFromSet,
-            activeIndex,
-            setActiveIndex,
-          });
+          return React.cloneElement(
+            child as React.ReactElement<FileUploaderContentProps>,
+            {
+              orientation,
+              value,
+              uploadStatus,
+              removeFileFromSet,
+              activeIndex,
+              setActiveIndex,
+            },
+          );
         }
         if (child.type === FileInput) {
-          return React.cloneElement(child as React.ReactElement<FileInputProps>, {
-            dropzoneState,
-            isFileTooBig,
-            isLOF,
-          });
+          return React.cloneElement(
+            child as React.ReactElement<FileInputProps>,
+            {
+              dropzoneState,
+              isFileTooBig,
+              isLOF,
+            },
+          );
         }
       }
       return child;
@@ -463,45 +492,60 @@ FileUploader.displayName = "FileUploader";
 export const FileUploaderContent = forwardRef<
   HTMLDivElement,
   FileUploaderContentProps
->(({ children, className, orientation = "vertical", value = null, uploadStatus = [], removeFileFromSet, activeIndex = -1, setActiveIndex, ...props }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+>(
+  (
+    {
+      children,
+      className,
+      orientation = "vertical",
+      value = null,
+      uploadStatus = [],
+      removeFileFromSet,
+      activeIndex = -1,
+      setActiveIndex,
+      ...props
+    },
+    ref,
+  ) => {
+    const containerRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div
-      className={cn("w-full px-1")}
-      ref={containerRef}
-      aria-description="content file holder"
-    >
+    return (
       <div
-        {...props}
-        ref={ref}
-        className={cn(
-          "flex rounded-xl gap-1",
-          orientation === "horizontal" ? "flex-raw flex-wrap" : "flex-col",
-          className,
-        )}
+        className={cn("w-full px-1")}
+        ref={containerRef}
+        aria-description="content file holder"
       >
-        {value &&
-          value.length > 0 &&
-          value.map((file, i) => {
-            const status = uploadStatus[i];
-            return (
-              <FileUploaderItem
-                key={i}
-                file={file}
-                index={i}
-                uploadStatus={status?.status || "uploading"}
-                removeFileFromSet={removeFileFromSet!}
-                activeIndex={activeIndex}
-                setActiveIndex={setActiveIndex!}
-              />
-            );
-          })}
-        {children}
+        <div
+          {...props}
+          ref={ref}
+          className={cn(
+            "flex rounded-xl gap-1",
+            orientation === "horizontal" ? "flex-raw flex-wrap" : "flex-col",
+            className,
+          )}
+        >
+          {value &&
+            value.length > 0 &&
+            value.map((file, i) => {
+              const status = uploadStatus[i];
+              return (
+                <FileUploaderItem
+                  key={i}
+                  file={file}
+                  index={i}
+                  uploadStatus={status?.status || "uploading"}
+                  removeFileFromSet={removeFileFromSet!}
+                  activeIndex={activeIndex}
+                  setActiveIndex={setActiveIndex!}
+                />
+              );
+            })}
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 FileUploaderContent.displayName = "FileUploaderContent";
 
@@ -565,51 +609,64 @@ export const FileUploaderItem = ({
 
 FileUploaderItem.displayName = "FileUploaderItem";
 
-export const FileInput = forwardRef<
-  HTMLDivElement,
-  FileInputProps
->(({ className, children, dropzoneState, isFileTooBig = false, isLOF = false, ...props }, ref) => {
-  // If dropzoneState is not provided, create a fallback (this shouldn't happen in normal usage)
-  if (!dropzoneState) {
-    console.warn("FileInput: dropzoneState not provided. Component may not function correctly.");
+export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
+  (
+    {
+      className,
+      children,
+      dropzoneState,
+      isFileTooBig = false,
+      isLOF = false,
+      ...props
+    },
+    ref,
+  ) => {
+    // If dropzoneState is not provided, create a fallback (this shouldn't happen in normal usage)
+    if (!dropzoneState) {
+      console.warn(
+        "FileInput: dropzoneState not provided. Component may not function correctly.",
+      );
+      return (
+        <div ref={ref} {...props} className={className}>
+          {children}
+        </div>
+      );
+    }
+
+    const rootProps = isLOF ? {} : dropzoneState.getRootProps();
     return (
-      <div ref={ref} {...props} className={className}>
-        {children}
+      <div
+        ref={ref}
+        {...props}
+        className={`relative w-full ${
+          isLOF ? "opacity-50 cursor-not-allowed " : "cursor-pointer "
+        }`}
+      >
+        <div
+          className={cn(
+            `w-full rounded-lg duration-300 ease-in-out
+         ${
+           dropzoneState.isDragAccept
+             ? "border-green-500"
+             : dropzoneState.isDragReject || isFileTooBig
+               ? "border-red-500"
+               : "border-gray-300"
+         }`,
+            className,
+          )}
+          {...rootProps}
+        >
+          {children}
+        </div>
+        <Input
+          ref={dropzoneState.inputRef}
+          disabled={isLOF}
+          {...dropzoneState.getInputProps()}
+          className={`${isLOF ? "cursor-not-allowed" : ""}`}
+        />
       </div>
     );
-  }
-
-  const rootProps = isLOF ? {} : dropzoneState.getRootProps();
-  return (
-    <div
-      ref={ref}
-      {...props}
-      className={`relative w-full ${isLOF ? "opacity-50 cursor-not-allowed " : "cursor-pointer "
-        }`}
-    >
-      <div
-        className={cn(
-          `w-full rounded-lg duration-300 ease-in-out
-         ${dropzoneState.isDragAccept
-            ? "border-green-500"
-            : dropzoneState.isDragReject || isFileTooBig
-              ? "border-red-500"
-              : "border-gray-300"
-          }`,
-          className,
-        )}
-        {...rootProps}
-      >
-        {children}
-      </div>
-      <Input
-        ref={dropzoneState.inputRef}
-        disabled={isLOF}
-        {...dropzoneState.getInputProps()}
-        className={`${isLOF ? "cursor-not-allowed" : ""}`}
-      />
-    </div>
-  );
-});
+  },
+);
 
 FileInput.displayName = "FileInput";

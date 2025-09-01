@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import Dialog from '@/components/dialog'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
+import Dialog from "@/components/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   FormField,
   FormItem,
@@ -12,14 +12,14 @@ import {
   FormControl,
   FormMessage,
   Form,
-} from '@/components/ui/form'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
-import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import TimeColumnsMultiSelect from '@/app/(authenticated)/datastore/create/time-columns-multiselect'
-import LocationColumnsMultiSelect from '@/app/(authenticated)/datastore/create/location-columns-multiselect'
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import TimeColumnsMultiSelect from "@/app/(authenticated)/datastore/create/time-columns-multiselect";
+import LocationColumnsMultiSelect from "@/app/(authenticated)/datastore/create/location-columns-multiselect";
 
 // --- Zod Schema ---
 const datasetConfigSchema = z.object({
@@ -32,83 +32,89 @@ const datasetConfigSchema = z.object({
   district: z.string().optional(),
   mandal: z.string().optional(),
   wardNo: z.string().optional(),
-})
+});
 
-type DatasetConfigFormType = z.infer<typeof datasetConfigSchema>
+type DatasetConfigFormType = z.infer<typeof datasetConfigSchema>;
 
 // --- Types ---
 export interface DatasetConfigFormData {
-  isSpatial: boolean
-  isTemporal: boolean
-  hasLatitude: boolean
-  hasLongitude: boolean
-  timeColumns?: string[]
-  locationColumns?: string[]
-  district?: string
-  mandal?: string
-  wardNo?: string
+  isSpatial: boolean;
+  isTemporal: boolean;
+  hasLatitude: boolean;
+  hasLongitude: boolean;
+  timeColumns?: string[];
+  locationColumns?: string[];
+  district?: string;
+  mandal?: string;
+  wardNo?: string;
 }
 
 interface DatasetConfigDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onComplete: (data: DatasetConfigFormData) => void
-  onSubmitForm?: (configData: DatasetConfigFormData) => void
-  isSubmitting?: boolean
-  columns?: string[]
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onComplete: (data: DatasetConfigFormData) => void;
+  onSubmitForm?: (configData: DatasetConfigFormData) => void;
+  isSubmitting?: boolean;
+  columns?: string[];
 }
 
 // --- Progress Step Component ---
 interface ProgressStepProps {
-  step: number
-  currentStep: number
-  title: string
-  isCompleted: boolean
-  showConnector: boolean
+  step: number;
+  currentStep: number;
+  title: string;
+  isCompleted: boolean;
+  showConnector: boolean;
 }
 
-function ProgressStep({ step, currentStep, title, isCompleted, showConnector }: ProgressStepProps) {
-  const isCurrent = step === currentStep
-  const isCompletedStep = isCompleted || step < currentStep
-  
+function ProgressStep({
+  step,
+  currentStep,
+  title,
+  isCompleted,
+  showConnector,
+}: ProgressStepProps) {
+  const isCurrent = step === currentStep;
+  const isCompletedStep = isCompleted || step < currentStep;
+
   return (
     <div className="flex flex-row items-center flex-1">
       <div className="flex flex-row items-center justify-center">
-        <div 
+        <div
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
-            isCompletedStep 
-              ? "bg-primary text-primary-foreground" 
-              : isCurrent 
-                ? "bg-primary/20 text-primary border-2 border-primary" 
-                : "bg-muted text-muted-foreground"
+            isCompletedStep
+              ? "bg-primary text-primary-foreground"
+              : isCurrent
+                ? "bg-primary/20 text-primary border-2 border-primary"
+                : "bg-muted text-muted-foreground",
           )}
         >
           {isCompletedStep ? <Check className="w-4 h-4" /> : step + 1}
         </div>
-        <span 
+        <span
           className={cn(
             "ml-2 text-xs font-medium transition-colors duration-200 whitespace-nowrap",
-            isCompletedStep 
-              ? "text-primary" 
-              : isCurrent 
-                ? "text-foreground" 
-                : "text-muted-foreground"
+            isCompletedStep
+              ? "text-primary"
+              : isCurrent
+                ? "text-foreground"
+                : "text-muted-foreground",
           )}
         >
           {title}
         </span>
       </div>
       {showConnector && (
-        <div 
+        <div
           className={cn(
             "flex-1 h-px mx-4",
-            isCompletedStep ? "bg-primary" : "bg-border"
-          )} 
+            isCompletedStep ? "bg-primary" : "bg-border",
+          )}
         />
       )}
     </div>
-  )
+  );
 }
 
 // --- Main Dialog Component ---
@@ -120,7 +126,7 @@ export function DatasetConfigurationDialog({
   isSubmitting = false,
   columns = [],
 }: DatasetConfigDialogProps) {
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0);
 
   // --- React Hook Form ---
   const form = useForm<DatasetConfigFormType>({
@@ -132,50 +138,50 @@ export function DatasetConfigurationDialog({
       hasLongitude: false,
       timeColumns: [],
       locationColumns: [],
-      district: '',
-      mandal: '',
-      wardNo: '',
+      district: "",
+      mandal: "",
+      wardNo: "",
     },
-  })
+  });
 
   // --- Handlers ---
   const handleNext = () => {
     if (currentStep < 2) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(currentStep + 1);
     }
-  }
+  };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   const handleSubmit = async (data: DatasetConfigFormType) => {
     try {
-      console.log('Dataset Configuration Data:', data)
-      onComplete(data)
+      console.log("Dataset Configuration Data:", data);
+      onComplete(data);
       if (onSubmitForm) {
-        await onSubmitForm(data)
+        await onSubmitForm(data);
       }
-      onOpenChange(false)
-      setCurrentStep(0) // Reset step when closing
+      onOpenChange(false);
+      setCurrentStep(0); // Reset step when closing
     } catch (error) {
-      console.error('Error submitting form:', error)
+      console.error("Error submitting form:", error);
     }
-  }
+  };
 
   const handleClose = () => {
-    onOpenChange(false)
-    setCurrentStep(0) // Reset step when closing
-  }
+    onOpenChange(false);
+    setCurrentStep(0); // Reset step when closing
+  };
 
   // --- Progress Steps ---
   const steps = [
-    { id: 0, title: 'Time/Location Data Checking' },
-    { id: 1, title: 'Select Data Column' },
-    { id: 2, title: 'Select Granularity' },
-  ]
+    { id: 0, title: "Time/Location Data Checking" },
+    { id: 1, title: "Select Data Column" },
+    { id: 2, title: "Select Granularity" },
+  ];
 
   // --- Step Content ---
   const renderStepContent = () => {
@@ -196,7 +202,10 @@ export function DatasetConfigurationDialog({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel htmlFor="isTemporal" className="text-sm font-medium">
+                    <FormLabel
+                      htmlFor="isTemporal"
+                      className="text-sm font-medium"
+                    >
                       My Dataset Contains Time Data
                     </FormLabel>
                     <FormMessage />
@@ -217,7 +226,10 @@ export function DatasetConfigurationDialog({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel htmlFor="isSpatial" className="text-sm font-medium">
+                    <FormLabel
+                      htmlFor="isSpatial"
+                      className="text-sm font-medium"
+                    >
                       My Dataset Contains Location Data
                     </FormLabel>
                     <FormMessage />
@@ -226,7 +238,7 @@ export function DatasetConfigurationDialog({
               />
             </div>
           </div>
-        )
+        );
       case 1:
         return (
           <div className="space-y-3">
@@ -234,22 +246,24 @@ export function DatasetConfigurationDialog({
               <label className="text-sm font-medium">Select Time Columns</label>
               <TimeColumnsMultiSelect
                 columns={columns}
-                value={form.watch('timeColumns') || []}
-                onChange={(value) => form.setValue('timeColumns', value)}
-                disabled={!form.watch('isTemporal')}
+                value={form.watch("timeColumns") || []}
+                onChange={(value) => form.setValue("timeColumns", value)}
+                disabled={!form.watch("isTemporal")}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Location Columns</label>
+              <label className="text-sm font-medium">
+                Select Location Columns
+              </label>
               <LocationColumnsMultiSelect
                 columns={columns}
-                value={form.watch('locationColumns') || []}
-                onChange={(value) => form.setValue('locationColumns', value)}
-                disabled={!form.watch('isSpatial')}
+                value={form.watch("locationColumns") || []}
+                onChange={(value) => form.setValue("locationColumns", value)}
+                disabled={!form.watch("isSpatial")}
               />
             </div>
           </div>
-        )
+        );
       case 2:
         return (
           <div className="space-y-3">
@@ -266,7 +280,10 @@ export function DatasetConfigurationDialog({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel htmlFor="location-checkbox" className="text-sm font-medium">
+                    <FormLabel
+                      htmlFor="location-checkbox"
+                      className="text-sm font-medium"
+                    >
                       Location
                     </FormLabel>
                     <FormMessage />
@@ -274,7 +291,7 @@ export function DatasetConfigurationDialog({
                 )}
               />
             </div>
-            
+
             <div className="space-y-3 pl-6">
               <FormField
                 control={form.control}
@@ -335,11 +352,11 @@ export function DatasetConfigurationDialog({
               />
             </div>
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   // --- UI ---
   return (
@@ -370,14 +387,17 @@ export function DatasetConfigurationDialog({
 
       <div className="mt-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+          >
             {renderStepContent()}
-            
+
             <div className="flex items-center justify-start space-x-2 pt-4">
               {currentStep > 0 && (
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   onClick={handleBack}
                   disabled={isSubmitting}
                   className="bg-background text-foreground border-border hover:bg-muted"
@@ -386,7 +406,7 @@ export function DatasetConfigurationDialog({
                 </Button>
               )}
               {currentStep < 2 ? (
-                <Button 
+                <Button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
@@ -398,7 +418,7 @@ export function DatasetConfigurationDialog({
                   Continue
                 </Button>
               ) : (
-                <Button 
+                <Button
                   type="submit"
                   disabled={isSubmitting}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"

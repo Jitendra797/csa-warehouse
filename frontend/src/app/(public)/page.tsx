@@ -1,7 +1,7 @@
-'use client'
-import { FeatureCard } from '@/components/feature-card'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { LoginDialog } from '@/components/logindialogue'
+"use client";
+import { FeatureCard } from "@/components/feature-card";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LoginDialog } from "@/components/logindialogue";
 
 export default function LandingPage() {
   return (
@@ -57,5 +57,5 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

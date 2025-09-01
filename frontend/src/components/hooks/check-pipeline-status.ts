@@ -1,49 +1,33 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from "react";
 
-type PipelineStatus = 'completed' | 'running' | 'error'
+export type PipelineStatus = "running" | "completed" | "error" | null;
 
-/**
- * Custom hook to automatically check pipeline status every 30 seconds when pipeline is running
- * @param pipelineStatus - Current status of the pipeline
- * @param checkPipelineStatus - Function to call for checking pipeline status
- * @param datasetId - ID of the dataset for logging purposes
- */
 export const usePipelineStatusCheck = (
   pipelineStatus: PipelineStatus | null,
   checkPipelineStatus: () => Promise<void>,
-  datasetId: string
+  pipelineId: string,
+  execId?: string | null,
 ) => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Clear any existing interval
     if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
 
-    // If pipeline is running, set up an interval to check status every 30 seconds
-    if (pipelineStatus === 'running') {
-      console.log(`Setting up status check interval for dataset ${datasetId} every 30 seconds`)
-      
-      // Check immediately
-      checkPipelineStatus()
-      
-      // Then set up interval for every 30 seconds
+    if (pipelineStatus === "running") {
+      checkPipelineStatus();
       intervalRef.current = setInterval(() => {
-        console.log(`Checking pipeline status for dataset ${datasetId} (30-second interval)`)
-        checkPipelineStatus()
-      }, 30 * 1000) // 30 seconds in milliseconds
+        checkPipelineStatus();
+      }, 30 * 1000);
     }
 
-    // Cleanup function to clear interval when component unmounts or status changes
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-    }
-  }, [pipelineStatus, checkPipelineStatus, datasetId])
-}
-
-
+    };
+  }, [pipelineStatus, checkPipelineStatus, pipelineId, execId]);
+};
