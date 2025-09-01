@@ -5,23 +5,23 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 # --------------------------------- /datasets ---------------------------------
-class DatasetInfo(BaseModel):
+class DatasetInfo(BaseModel): 
     """Schema representing a single dataset entry"""
     dataset_id: str = Field(..., description = "Unique identifier for the dataset")
     dataset_name: str = Field(..., description = "Name of the dataset")
     file_id: str = Field(..., description = "ID of the file in storage")
     description: str = Field(..., description = "Description about the dataset")
-    tags: List[str] = Field(default_factory = list, description = "List of tags associated with the dataset")
+    tags: List[str] = Field(..., description = "List of tags associated with the dataset")
     dataset_type: str = Field(..., description = "Type of the dataset")
     permissions: str = Field(..., description = "Permissions associated with the dataset")
-    is_spatial: bool = Field(default = False, description = "Whether the dataset has spatial data")
-    is_temporial: bool = Field(default = False, description = "Whether the dataset has temporal data")
-    pulled_from_pipeline: bool = Field(default = False, description = "Whether dataset is pulled from a pipeline")
+    is_spatial: bool = Field(..., description = "Whether the dataset has spatial data")
+    is_temporial: bool = Field(..., description = "Whether the dataset has temporal data")
+    pulled_from_pipeline: bool = Field(..., description = "Whether dataset is pulled from a pipeline")
     created_at: datetime = Field(..., description = "Timestamp when the dataset is created")
     updated_at: datetime = Field(..., description = "Timestamp when the dataset was updated")
-    user_id: List[str] = Field(default_factory = list, description = "List of user IDs associated with the dataset")
-    username: List[str] = Field(default_factory = list, description = "List of usernames associated with the dataset")
-    user_email: List[str] = Field(default_factory = list, description = "List of user emails associated with the dataset") 
+    user_id: List[str] = Field(..., description = "List of user IDs associated with the dataset")
+    user_name: List[str] = Field(..., description = "List of usernames associated with the dataset")
+    user_email: List[str] = Field(..., description = "List of user emails associated with the dataset") 
 
 class BrowseResponse(BaseModel):
     """Schema representing the response returned when browsing datasets"""
@@ -33,18 +33,18 @@ class DatasetDetail(BaseModel):
     dataset_id: str = Field(..., description = "Unique identifier for the dataset")
     dataset_name: str = Field(..., description = "Name of the dataset")
     file_id: str = Field(..., description = "ID of the file in storage")
-    description: str = Field("", description = "Optional description of the dataset")
-    tags: List[str] = Field(default_factory = list, description = "List of tags associated with the dataset")
-    dataset_type: str = Field("", description = "Type of the dataset")
-    permissions: str = Field("", description = "Permissions associated with the dataset")
-    is_spatial: bool = Field(False, description = "Whether the dataset contains spatial data")
-    is_temporial: bool = Field(False, description = "Whether the dataset contains temporal data")
-    pulled_from_pipeline: bool = Field(False, description = "Whether the dataset was pulled from a pipeline")
+    description: str = Field(..., description = "Optional description of the dataset")
+    tags: List[str] = Field(..., description = "List of tags associated with the dataset")
+    dataset_type: str = Field(..., description = "Type of the dataset")
+    permissions: str = Field(..., description = "Permissions associated with the dataset")
+    is_spatial: bool = Field(..., description = "Whether the dataset contains spatial data")
+    is_temporial: bool = Field(..., description = "Whether the dataset contains temporal data")
+    pulled_from_pipeline: bool = Field(..., description = "Whether the dataset was pulled from a pipeline")
     created_at: datetime = Field(..., description = "Timestamp when the dataset was created")
     updated_at: datetime = Field(..., description = "Timestamp when the dataset was last updated")
-    user_id: List[str] = Field(default_factory = list, description = "List of user IDs associated with the dataset")
-    user_name: List[str] = Field(default_factory = list, description = "List of usernames associated with the dataset")
-    rows: List[Dict[str, Any]] = Field(default_factory = list, description = "Preview of dataset records (top 10 rows & columns)")
+    user_id: List[str] = Field(..., description = "List of user IDs associated with the dataset")
+    user_name: List[str] = Field(..., description = "List of usernames associated with the dataset")
+    rows: List[Dict[str, Any]] = Field(..., description = "Preview of dataset records (top 10 rows & columns)")
 
 class DatasetInfoResponse(BaseModel):
     """Response schema for fetching dataset details."""
