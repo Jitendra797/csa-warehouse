@@ -1,4 +1,4 @@
-import math 
+import math
 from uuid import uuid4
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Union
@@ -6,16 +6,17 @@ from pymongo.collection import Collection
 from app.schemas.models import CreateDatasetInformationRequest
 from app.db.database import datasets_collection, dataset_information_collection
 
-def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, dataset_records: List[Dict[str, Any]], user_email: str = "") -> Dict[str, Any]: 
+
+def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, dataset_records: List[Dict[str, Any]], user_email: str = "") -> Dict[str, Any]:
     current_time = datetime.now(timezone.utc).isoformat()
 
     # First check if dataset_id already exists in datasets_collection
     existing_data_doc = datasets_collection.find_one({"_id": dataset_id})
-    
+
     if existing_data_doc:
         # Update existing dataset data
         columns = list(dataset_records[0].keys()) if dataset_records else []
-        
+
         datasets_collection.update_one(
             {"_id": dataset_id},
             {
@@ -26,12 +27,13 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 }
             }
         )
-        
+
         # Check if dataset information exists for this dataset_id
-        existing_info = dataset_information_collection.find_one({"dataset_id": dataset_id})
-        
+        existing_info = dataset_information_collection.find_one(
+            {"dataset_id": dataset_id})
+
         if existing_info:
-            # Update dataset information 
+            # Update dataset information
             dataset_information_collection.update_one(
                 {"_id": existing_info["_id"]},
                 {
@@ -41,7 +43,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                     }
                 }
             )
-            
+
             # Add user_id, username, and email to arrays (using separate addToSet operations)
             if user_id not in existing_info.get("user_id", []):
                 dataset_information_collection.update_one(
@@ -80,7 +82,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "user_email": [user_email] if user_email else []
             }
             dataset_information_collection.insert_one(dataset_info_doc)
-        
+
         return {
             "id": str(dataset_id),
             "user_id": user_id,
@@ -93,12 +95,14 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
 
     else:
         # Check if dataset information exists by name (in case dataset_id is new but name exists)
-        existing_info = dataset_information_collection.find_one({"dataset_name": dataset_name})
-        
+        existing_info = dataset_information_collection.find_one(
+            {"dataset_name": dataset_name})
+
         if existing_info and existing_info["dataset_id"] != dataset_id:
             # Dataset name exists but with different ID - update the existing data document
-            columns = list(dataset_records[0].keys()) if dataset_records else []
-            
+            columns = list(dataset_records[0].keys()
+                           ) if dataset_records else []
+
             datasets_collection.update_one(
                 {"_id": existing_info["dataset_id"]},
                 {
@@ -109,7 +113,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                     }
                 }
             )
-            
+
             # Update information document
             dataset_information_collection.update_one(
                 {"_id": existing_info["_id"]},
@@ -120,7 +124,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                     }
                 }
             )
-            
+
             # Add user info using separate addToSet operations
             if user_id not in existing_info.get("user_id", []):
                 dataset_information_collection.update_one(
@@ -137,7 +141,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                     {"_id": existing_info["_id"]},
                     {"$addToSet": {"user_email": user_email}}
                 )
-            
+
             return {
                 "id": str(existing_info["dataset_id"]),
                 "user_id": user_id,
@@ -149,20 +153,21 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
             }
         else:
             # Create completely new dataset (both data and information)
-            columns = list(dataset_records[0].keys()) if dataset_records else []
-            
+            columns = list(dataset_records[0].keys()
+                           ) if dataset_records else []
+
             dataset_doc = {
                 "_id": dataset_id,  # Use the provided dataset_id
                 "data": dataset_records,
                 "columns": columns,
                 "record_count": len(dataset_records)
             }
-            
+
             datasets_collection.insert_one(dataset_doc)
 
             # Create new dataset information document
             info_doc_id = uuid4().hex
-            
+
             dataset_info_doc = {
                 "_id": info_doc_id,
                 "dataset_name": dataset_name,
@@ -191,8 +196,9 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "dataset_id": dataset_id,
                 "dataset_name": dataset_name,
                 "record_count": len(dataset_records),
-                "created_at": dataset_info_doc["created_at"] 
+                "created_at": dataset_info_doc["created_at"]
             }
+
 
 def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     def sanitize_value(value: Any) -> Any:
@@ -202,10 +208,11 @@ def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
             return {k: sanitize_value(v) for k, v in value.items()}
         if isinstance(value, list):
             return [sanitize_value(v) for v in value]
-        return value 
+        return value
 
     doc["_id"] = str(doc["_id"])
     return {k: sanitize_value(v) for k, v in doc.items()}
+
 
 def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     try:
@@ -217,22 +224,24 @@ def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str
                     {"dataset_name": dataset_id}
                 ]
             })
-            
+
             if not info_doc:
                 return {}
 
             # Fetch actual dataset rows
-            data_doc = datasets_collection.find_one({"_id": info_doc["dataset_id"]})
+            data_doc = datasets_collection.find_one(
+                {"_id": info_doc["dataset_id"]})
             data_rows: List[Dict[str, Any]] = []
 
             if data_doc and "data" in data_doc:
                 # Take top 10 rows
-                rows = data_doc["data"][:10] 
+                rows = data_doc["data"][:10]
                 if rows:
                     # Take top 10 columns based on the first row
                     selected_columns = list(rows[0].keys())[:10]
                     for row in rows:
-                        limited_row = {col: row.get(col) for col in selected_columns}
+                        limited_row = {col: row.get(col)
+                                       for col in selected_columns}
                         data_rows.append(limited_row)
 
             return {
@@ -250,7 +259,7 @@ def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str
                 "updated_at": info_doc.get("updated_at"),
                 "user_id": info_doc.get("user_id", []),
                 "user_name": info_doc.get("user_name", []),
-                "user_name": info_doc.get("user_email", []), 
+                "user_email": info_doc.get("user_email", []),
                 "rows": data_rows
             }
 
@@ -275,18 +284,19 @@ def get_data_from_collection(dataset_id: Optional[str] = None) -> Union[Dict[str
                     "updated_at": doc.get("updated_at"),
                     "user_id": doc.get("user_id", []),
                     "user_name": doc.get("user_name", []),
-                    "user_email": doc.get("user_email", []) 
+                    "user_email": doc.get("user_email", [])
                 }
                 for doc in info_documents
             ]
 
     except Exception as e:
         raise RuntimeError(f"Error fetching documents: {e}")
-    
+
+
 def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: str) -> Dict[str, Any]:
     try:
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         # Create empty dataset data document first
         data_doc_id = uuid4().hex
         dataset_doc = {
@@ -295,9 +305,9 @@ def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: 
             "columns": [],
             "record_count": 0
         }
-        
+
         datasets_collection.insert_one(dataset_doc)
-        
+
         # Create dataset information document
         info_doc_id = uuid4().hex
         dataset_info_doc = {
@@ -330,7 +340,7 @@ def create_manual_dataset(request: CreateDatasetInformationRequest, dataset_id: 
             "created_at": current_time,
             "updated_at": current_time
         }
-        
+
     except Exception as e:
         return {
             "success": False,
