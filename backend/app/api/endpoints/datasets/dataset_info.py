@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from app.services.storage.mongodb_service import get_data_from_collection
-from app.schemas.models import DatasetInfoResponse, BrowseResponse
+from app.schemas.models import DatasetInfoResponse, BrowseResponse, ManageResponse
 
 dataset_info_router = APIRouter()
 
 @dataset_info_router.get("/datasets", response_model = BrowseResponse)
 async def get_datasets() -> BrowseResponse:
     data = get_data_from_collection()
-    print(data)
+    # print(data)
     return BrowseResponse(data = data)
 
 @dataset_info_router.get("/datasets/id/{dataset_id}", response_model = DatasetInfoResponse) 
@@ -21,8 +21,8 @@ async def get_dataset_info(dataset_id: str) -> DatasetInfoResponse:
                 status_code = 404,
                 detail = "Dataset not found"
             )
-        print(dataset) 
-        return DatasetInfoResponse(status = "success", data = dataset) 
+        # print(dataset) 
+        return DatasetInfoResponse(status = "success", data = [dataset]) 
         
     except HTTPException:
         raise
@@ -32,23 +32,12 @@ async def get_dataset_info(dataset_id: str) -> DatasetInfoResponse:
             detail = f"Internal server error: {str(e)}"
         )
     
-@dataset_info_router.get("/datasets/user/{user_id}", response_model = List[DatasetInfoResponse])
-async def get_user_datasets(user_id: str) -> List[DatasetInfoResponse]:
+@dataset_info_router.get("/datasets/user/{user_id}", response_model = ManageResponse)
+async def get_user_datasets(user_id: str) -> ManageResponse:
     try:
         datasets = get_data_from_collection(user_id=user_id)
         
-        if not datasets or datasets == []:
-            raise HTTPException(
-                status_code = 404,
-                detail = "No datasets found for this user"
-            )
-        
-        response = [
-            DatasetInfoResponse(status="success", data=dataset) 
-            for dataset in datasets
-        ]
-        
-        return response
+        return ManageResponse(data = datasets) 
 
     except HTTPException:
         raise

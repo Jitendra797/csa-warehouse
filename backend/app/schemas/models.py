@@ -27,6 +27,9 @@ class BrowseResponse(BaseModel):
     """Schema representing the response returned when browsing datasets"""
     data: List[DatasetInfo] 
 
+class ManageResponse(BaseModel):
+    data: List[DatasetInfo] 
+
 # --------------------------------- /datasets/{dataset_id} ---------------------------------
 class DatasetDetail(BaseModel):
     """Schema representing detailed dataset information."""
@@ -50,7 +53,7 @@ class DatasetDetail(BaseModel):
 class DatasetInfoResponse(BaseModel):
     """Response schema for fetching dataset details."""
     status: str = Field(..., description = "Status of the request")
-    data: DatasetDetail = Field(..., description = "Detailed dataset information")
+    data: List[DatasetDetail] 
 
 # --------------------------------- /pipelines ---------------------------------
 class PipelineHistoryItem(BaseModel):
