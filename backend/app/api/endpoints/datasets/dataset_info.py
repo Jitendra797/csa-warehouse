@@ -36,7 +36,6 @@ async def get_dataset_info(id: str) -> DatasetInfoResponse:
 async def get_user_datasets(user_id: str) -> ManageResponse:
     try:
         datasets = get_data_from_collection(user_id = user_id)
-        print(datasets)
         
         return ManageResponse(data = datasets) 
 

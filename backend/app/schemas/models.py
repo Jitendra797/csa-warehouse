@@ -30,6 +30,41 @@ class BrowseResponse(BaseModel):
 class ManageResponse(BaseModel):
     data: List[DatasetInfo] 
 
+# --------------------------------- /datasets/create ---------------------------------
+class TemporalGranularity(str, Enum):
+    YEAR = "year"
+    MONTH = "month"
+    DAY = "day"
+
+class SpatialGranularity(str, Enum):
+    COUNTRY = "country"
+    STATE = "state"
+    DISTRICT = "district"
+    VILLAGE = "village"
+    LAT_LONG = "lat_long"
+
+class CreateDatasetInformationRequest(BaseModel):
+    dataset_id: str = Field(..., description = "Dataset ID from /datasets/store")
+    file_id: str = Field(..., description = "File ID from /datasets/extract")
+    dataset_name: str = Field(..., description = "Name of the dataset")
+    description: Optional[str] = Field(None, description = "Description of the dataset")
+    tags: List[str] = Field(default_factory=list, description = "Tags for dataset")
+    dataset_type: str = Field(..., description = "Type of dataset")
+    permission: str = Field(..., description = "Access permission")
+    is_spatial: bool = Field(False, description = "Spatial dataset?")
+    is_temporal: bool = Field(False, description = "Temporal dataset?")
+    temporal_granularities: Optional[List[TemporalGranularity]] = None
+    spatial_granularities: Optional[List[SpatialGranularity]] = None
+    location_columns: Optional[List[str]] = Field(None, description = "location columns")
+    time_columns: Optional[List[str]] = Field(None, description = "time columns")
+    user_id: str = Field(..., description = "User ID")
+    user_name: str = Field(..., description = "User name")
+    user_email: Optional[str] = Field(None, description = "User email")
+
+class CreateDatasetInformationResponse(BaseModel):
+    status: str = Field(..., description = "Response Status")
+    id: str = Field(..., description = "Unique identifier for the dataset")
+
 # --------------------------------- /datasets/{dataset_id} ---------------------------------
 class DatasetDetail(BaseModel):
     """Schema representing detailed dataset information."""
@@ -42,6 +77,10 @@ class DatasetDetail(BaseModel):
     permissions: str = Field(..., description = "Permissions associated with the dataset")
     is_spatial: bool = Field(..., description = "Whether the dataset contains spatial data")
     is_temporial: bool = Field(..., description = "Whether the dataset contains temporal data")
+    temporal_granularities: Optional[List[TemporalGranularity]] = Field(..., description = "Temporal Granularities")
+    spatial_granularities: Optional[List[SpatialGranularity]] = Field(..., description = "Spatial Granularities")
+    location_columns: Optional[List[str]] = Field(..., description = "location columns")
+    time_columns: Optional[List[str]] = Field(..., description = "time columns")
     pulled_from_pipeline: bool = Field(..., description = "Whether the dataset was pulled from a pipeline")
     created_at: datetime = Field(..., description = "Timestamp when the dataset was created")
     updated_at: datetime = Field(..., description = "Timestamp when the dataset was last updated")
@@ -53,7 +92,7 @@ class DatasetDetail(BaseModel):
 class DatasetInfoResponse(BaseModel):
     """Response schema for fetching dataset details."""
     status: str = Field(..., description = "Status of the request")
-    data: List[DatasetDetail] 
+    data: DatasetDetail
 
 # --------------------------------- /pipelines ---------------------------------
 class PipelineHistoryItem(BaseModel):
@@ -113,39 +152,6 @@ class ExtractAndStoreResponse(BaseModel):
     status: str = Field(..., description = "Response Status")
     file_id: str = Field(..., description = "File ID from files collection")
     dataset_id: str = Field(..., description = "Dataset ID from datasets collection")
-
-# --------------------------------- /datasets/create ---------------------------------
-class TemporalGranularity(str, Enum):
-    YEAR = "year"
-    MONTH = "month"
-    DAY = "day"
-
-class SpatialGranularity(str, Enum):
-    COUNTRY = "country"
-    STATE = "state"
-    DISTRICT = "district"
-    VILLAGE = "village"
-    LAT_LONG = "lat_long"
-
-class CreateDatasetInformationRequest(BaseModel):
-    dataset_id: str = Field(..., description = "Dataset ID from /datasets/store")
-    file_id: str = Field(..., description = "File ID from /datasets/extract")
-    dataset_name: str = Field(..., description = "Name of the dataset")
-    description: Optional[str] = Field(None, description = "Description of the dataset")
-    tags: List[str] = Field(default_factory=list, description = "Tags for dataset")
-    dataset_type: str = Field(..., description = "Type of dataset")
-    permission: str = Field(..., description = "Access permission")
-    is_spatial: bool = Field(False, description = "Spatial dataset?")
-    is_temporal: bool = Field(False, description = "Temporal dataset?")
-    temporal_granularities: Optional[List[TemporalGranularity]] = None
-    spatial_granularities: Optional[List[SpatialGranularity]] = None
-    user_id: str = Field(..., description = "User ID")
-    user_name: str = Field(..., description = "User name")
-    user_email: Optional[str] = Field(None, description = "User email")
-
-class CreateDatasetInformationResponse(BaseModel):
-    status: str = Field(..., description = "Response Status")
-    id: str = Field(..., description = "Unique identifier for the dataset")
 
 # --------------------------------- /datasets/columns ---------------------------------
 class DatasetColumnsRequest(BaseModel):
