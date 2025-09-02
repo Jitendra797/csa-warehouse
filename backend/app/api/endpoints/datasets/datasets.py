@@ -47,6 +47,8 @@ async def create_dataset(request: CreateDatasetInformationRequest) -> CreateData
             "is_spatial": request.is_spatial,
             "temporal_granularities": request.temporal_granularities or [], 
             "spatial_granularities": request.spatial_granularities or [],
+            "location_columns": request.location_columns or [], 
+            "time_columns": request.time_columns or [], 
             "pulled_from_pipeline": False,
             "user_email": [request.user_email],
             "user_name": [request.user_name],
