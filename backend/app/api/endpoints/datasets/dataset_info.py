@@ -11,10 +11,10 @@ async def get_datasets() -> BrowseResponse:
     # print(data)
     return BrowseResponse(data = data)
 
-@dataset_info_router.get("/datasets/id/{dataset_id}", response_model = DatasetInfoResponse) 
-async def get_dataset_info(dataset_id: str) -> DatasetInfoResponse:
+@dataset_info_router.get("/dataset", response_model = DatasetInfoResponse) 
+async def get_dataset_info(id: str) -> DatasetInfoResponse:
     try:
-        dataset = get_data_from_collection(dataset_id = dataset_id)
+        dataset = get_data_from_collection(dataset_id = id)
         
         if not dataset or dataset == []:
             raise HTTPException(
@@ -22,7 +22,7 @@ async def get_dataset_info(dataset_id: str) -> DatasetInfoResponse:
                 detail = "Dataset not found"
             )
         # print(dataset) 
-        return DatasetInfoResponse(status = "success", data = [dataset]) 
+        return DatasetInfoResponse(status = "success", data = dataset) 
         
     except HTTPException:
         raise
@@ -32,10 +32,11 @@ async def get_dataset_info(dataset_id: str) -> DatasetInfoResponse:
             detail = f"Internal server error: {str(e)}"
         )
     
-@dataset_info_router.get("/datasets/user/{user_id}", response_model = ManageResponse)
+@dataset_info_router.get("/user/datasets", response_model = ManageResponse)
 async def get_user_datasets(user_id: str) -> ManageResponse:
     try:
-        datasets = get_data_from_collection(user_id=user_id)
+        datasets = get_data_from_collection(user_id = user_id)
+        print(datasets)
         
         return ManageResponse(data = datasets) 
 
