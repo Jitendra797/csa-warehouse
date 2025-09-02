@@ -215,7 +215,7 @@ def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
 def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     try:
         if dataset_id:
-            info_doc = dataset_information_collection.find_one({"_id": dataset_id})
+            info_doc = dataset_information_collection.find_one({"dataset_id": dataset_id})
             if not info_doc:
                 return {}
 
@@ -255,6 +255,7 @@ def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional
             query = {}
             if user_id:
                 query["user_id"] = user_id
+                query["pulled_from_pipeline"] = False
 
             cursor = dataset_information_collection.find(query)
             info_documents = [sanitize_document(doc) for doc in cursor]
@@ -287,9 +288,9 @@ def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional
                     "user_id": doc.get("user_id") or [],
                     "user_name": doc.get("user_name") or [],
                     "user_email": doc.get("user_email") or [],
-                    "rows": data_rows
+                    # "rows": data_rows
                 })
-            
+            print(results) 
             return results
 
     except Exception as e:
