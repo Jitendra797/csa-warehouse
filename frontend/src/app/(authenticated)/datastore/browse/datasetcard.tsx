@@ -1,3 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
+import { Mail, User, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -5,11 +10,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
-import { Mail, User, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export interface DatasetCardProps {
   dataset_id: string;
@@ -54,7 +54,7 @@ export function DatasetCard({
           {dataset_name}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-          {description}
+          {description? description : "No description provided."}
         </CardDescription>
         <p className="text-sm font-semibold text-foreground py-2">
           {pulled_from_pipeline ? (

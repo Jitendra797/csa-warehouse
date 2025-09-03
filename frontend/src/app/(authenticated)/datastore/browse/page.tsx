@@ -4,8 +4,8 @@ import { Search, Loader2 } from "lucide-react";
 import { DatasetCard } from "./datasetcard";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useState, useEffect } from "react";
-import { BrowseResponse, DatasetInfo } from "@/lib/hey-api/client/types.gen";
 import { getDatasetsDatasetsGet } from "@/lib/hey-api/client/sdk.gen";
+import { BrowseResponse, DatasetInfo } from "@/lib/hey-api/client/types.gen";
 
 export default function Browse() {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
@@ -60,8 +60,8 @@ export default function Browse() {
               dataset_id={dataset.dataset_id}
               dataset_name={dataset.dataset_name}
               description={dataset.description}
-              useremails={dataset.user_name}
-              usernames={dataset.user_id}
+              useremails={dataset.user_email}
+              usernames={dataset.user_name}
               updated_at={dataset.updated_at}
               pulled_from_pipeline={dataset.pulled_from_pipeline}
             />
