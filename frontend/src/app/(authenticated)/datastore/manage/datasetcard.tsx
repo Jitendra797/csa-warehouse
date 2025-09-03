@@ -1,3 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
+import { Mail, User, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -5,33 +10,32 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
-import { Mail, User, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export interface DatasetCardProps {
   dataset_id: string;
   dataset_name: string;
   description: string;
-  useremail: string;
-  username: string;
-  updated_at: string;
   pulled_from_pipeline: boolean;
+  usernames: string[];
+  useremails: string[];
+  updated_at: string;
 }
 
 export function DatasetCard({
   dataset_id,
   dataset_name,
   description,
-  useremail,
-  username,
+  useremails,
+  usernames,
   updated_at,
   pulled_from_pipeline,
 }: DatasetCardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const usernameslength = usernames.length;
+  const useremailslength = useremails.length;
+  const username = usernames[usernameslength - 1];
+  const useremail = useremails[useremailslength - 1];
 
   const handleView = async () => {
     setIsLoading(true);

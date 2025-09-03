@@ -4,17 +4,13 @@ import { Search, Loader2 } from "lucide-react";
 import { DatasetCard } from "./datasetcard";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useState, useEffect } from "react";
-import { getUserDatasetsDatasetUserIdGet } from "@/lib/hey-api/client/sdk.gen";
-import {
-  DatasetInformationResponse,
-  DatasetInformation,
-  GetUserDatasetsDatasetUserIdGetResponses,
-} from "@/lib/hey-api/client/types.gen";
 import { useSession } from "next-auth/react";
+import { getUserDatasetsUserDatasetsGet } from "@/lib/hey-api/client/sdk.gen";
+import { DatasetInfo, ManageResponse } from "@/lib/hey-api/client";
 
 export default function Manage() {
   const { data: session } = useSession();
-  const [datasets, setDatasets] = useState<DatasetInformation[]>([]);
+  const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,11 +19,17 @@ export default function Manage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await getUserDatasetsDatasetUserIdGet();
+        const response = await getUserDatasetsUserDatasetsGet(
+          {
+            query: {
+              user_id: session?.user?.name || "",
+            },
+          }
+        );
         if (response.data) {
-          const responseData: GetUserDatasetsDatasetUserIdGetResponses =
-            response.data;
-          setDatasets(responseData.data);
+          const responseData: ManageResponse = response.data;
+          const datasetsdetails: DatasetInfo[] = responseData.data;
+          setDatasets(datasetsdetails);
         } else {
           throw new Error("Failed to fetch datasets");
         }
@@ -40,7 +42,7 @@ export default function Manage() {
     };
 
     fetchDatasets();
-  }, [session?.user?.email]);
+  }, [session?.user?.name]);
 
   return (
     <ContentLayout title="Manage">
@@ -65,8 +67,8 @@ export default function Manage() {
               dataset_id={dataset.dataset_id}
               dataset_name={dataset.dataset_name}
               description={dataset.description || "No description"}
-              useremail={dataset.user_email}
-              username={dataset.user_name}
+              useremails={dataset.user_email}
+              usernames={dataset.user_name}
               updated_at={dataset.updated_at}
               pulled_from_pipeline={dataset.pulled_from_pipeline}
             />
