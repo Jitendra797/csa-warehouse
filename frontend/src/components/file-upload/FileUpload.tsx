@@ -3,15 +3,6 @@
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  getPresignedUrlGeneratePresignedUrlGet,
-  extractCsvDataExtractCsvDataPost,
-  createFileEndpointCreateFilePost,
-} from "@/lib/hey-api/client/sdk.gen";
-import {
-  CreateFileResponse,
-  ExtractCsvDataResponse,
-} from "@/lib/hey-api/client/types.gen";
 import React, {
   Dispatch,
   SetStateAction,
@@ -35,6 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Paperclip } from "lucide-react";
+import { ExtractAndStoreResponse, ExtractCsvDataRequest, extractCsvDatasetsExtractPost, getPresignedUrlPresignedUrlGet, PresignedUrlResponse } from "@/lib/hey-api/client";
 
 interface FileRecord {
   fileId: number;
@@ -161,24 +153,22 @@ export const FileUploader = forwardRef<
         const uniqueFileName = `${fileNameWithoutExt}_${timestamp}.${fileExt}`;
 
         // Get presigned URL using SDK
-        const presignedResponse = await getPresignedUrlGeneratePresignedUrlGet({
+        const response = await getPresignedUrlPresignedUrlGet({
           query: {
             filename: uniqueFileName,
+            user_id: ""
           },
         });
-        console.log("Presigned response:", presignedResponse);
-
-        if (presignedResponse.error) {
+        const presignedUrlResponse= response.data as PresignedUrlResponse;
+        console.log("Presigned URL response:", presignedUrlResponse);
+        const upload_url = presignedUrlResponse?.upload_url;
+        const object_name = presignedUrlResponse?.object_name;
+        if (!upload_url) {
           throw new Error("Failed to get presigned URL");
         }
 
-        const presignedUrl = (presignedResponse.data as { upload_url: string })
-          ?.upload_url;
-        console.log("Presigned URL response:", presignedUrl);
-        console.log("Type of presignedUrl:", typeof presignedUrl);
-
         // Now upload the file using the presigned URL
-        const uploadResponse = await fetch(presignedUrl as string, {
+        const uploadResponse = await fetch(upload_url, {
           method: "PUT",
           body: file,
           headers: {
@@ -191,54 +181,33 @@ export const FileUploader = forwardRef<
         }
         console.log("Upload response:", uploadResponse);
 
-        // Extract CSV data after successful upload
-        const extractResponse = await extractCsvDataExtractCsvDataPost({
-          body: {
-            filename: uniqueFileName,
-            user_id: "",
-            username: "",
-          },
-        });
+        const extractCsvDataRequest: ExtractCsvDataRequest = {
+          file_object: object_name,
+          user_id: "",
+          user_name: "",
+        };
 
-        if (extractResponse.error) {
+        // Extract CSV data after successful upload
+        const extractresponse = await extractCsvDatasetsExtractPost({
+          body: extractCsvDataRequest,
+        });
+        const extractResponseData = extractresponse.data as ExtractAndStoreResponse;
+
+        if (!extractResponseData) {
           throw new Error("Failed to extract CSV data");
         }
-
-        console.log("CSV extraction response:", extractResponse.data);
-
-        // Get the file URL (remove query parameters from presigned URL)
-        const fileUrl = presignedUrl.split("?")[0];
-
-        // Store file record in database and get file ID
-        const recordResponse = await createFileEndpointCreateFilePost({
-          body: {
-            file_ext: fileExt,
-            file_name: uniqueFileName,
-            file_size: file.size,
-            file_type: file.type,
-            file_url: fileUrl,
-          },
-        });
-
-        if (recordResponse.error) {
-          throw new Error("Failed to record file metadata");
+        const file_id = extractResponseData?.file_id;
+        if (!file_id) {
+          throw new Error("Failed to get file ID from extraction response");
         }
-
-        const recordData = recordResponse.data as CreateFileResponse;
-        console.log("File record data:", recordData);
-
-        // Extract dataset_id and columns from the CSV extraction response
-        const extractData = extractResponse.data as ExtractCsvDataResponse;
-        const dataset_id = (extractData.data?.dataset_id as string) || "";
-        const columns = (extractData.data?.columns as string[]) || [];
-        const file_id = recordData?.data?.id || "";
-
-        // Return both the file ID and the extracted data
+        const dataset_id = extractResponseData?.dataset_id;
+        if (!dataset_id) {
+          throw new Error("Failed to get dataset ID from extraction response");
+        }
         return {
           file_id,
-          dataset_id,
-          columns,
-        };
+          dataset_id
+        }
       } catch (error) {
         console.error("Upload error:", error);
         throw error;

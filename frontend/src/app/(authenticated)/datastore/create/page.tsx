@@ -1,12 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudUpload, Paperclip } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
+import FileDownloadButton from "@/components/file-upload/FileDownloadButton";
+import { TagInput } from "@/app/(authenticated)/datastore/create/tag-input";
+import { useToast } from "@/components/hooks/use-toast";
+import { useSession } from "next-auth/react";
+import { SearchDatatype } from "@/app/(authenticated)/datastore/create/search-datatype";
 import {
   Select,
   SelectContent,
@@ -14,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -22,22 +28,17 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   FileInput,
   FileUploader,
   FileUploaderContent,
 } from "@/components/file-upload/FileUpload";
-import FileDownloadButton from "@/components/file-upload/FileDownloadButton";
-import { TagInput } from "@/app/(authenticated)/datastore/create/tag-input";
 import {
   DatasetConfigurationDialog,
   DatasetConfigFormData,
 } from "@/app/(authenticated)/datastore/create/dataset-cofig-dialogue";
-import { useToast } from "@/components/hooks/use-toast";
-import { useSession } from "next-auth/react";
-import { SearchDatatype } from "@/app/(authenticated)/datastore/create/search-datatype";
-import { createDatasetInformationEndpointCreateDatasetInformationPost } from "@/lib/hey-api/client/sdk.gen";
+import { createDatasetDatasetsCreatePost } from "@/lib/hey-api/client/sdk.gen";
+import { CreateDatasetInformationRequest, CreateDatasetInformationResponse } from "@/lib/hey-api/client";
 
 // Zod schemas for each section
 const datasetInformationSchema = z.object({
@@ -56,6 +57,7 @@ type CompleteFormData = {
   };
   configuration?: {
     isSpatial: boolean;
+    isTemporal: boolean;
     spatialHierarchy?: {
       lat?: number;
       long?: number;
@@ -64,7 +66,6 @@ type CompleteFormData = {
       district?: string;
       village?: string;
     };
-    isTemporal: boolean;
     temporalHierarchy?: string;
   };
 };
@@ -78,7 +79,6 @@ export default function Create() {
   const [uploadedFileData, setUploadedFileData] = useState<{
     dataset_id: string;
     file_id: string;
-    columns: string[];
   } | null>(null);
   const { toast } = useToast();
   const { data: session } = useSession();
@@ -142,53 +142,41 @@ export default function Create() {
 
       console.log("Complete form data:", completeData);
       console.log("Uploaded file data:", uploadedFileData);
-      console.log("CSV columns:", uploadedFileData.columns);
 
       // Prepare the dataset object for the API
-      const datasetPayload: {
-        dataset_name: string;
-        description: string;
-        permission: string;
-        dataset_type: string;
-        tags: string[];
-        dataset_id: string;
-        file_id: string;
-        is_temporal: boolean;
-        is_spatial: boolean;
-        pulled_from_pipeline: boolean;
-        user_email: string;
-        user_name: string;
-        user_id: string;
-        pipeline_id: string | null;
-      } = {
-        dataset_name: data.name,
-        description: data.description || "",
-        permission: data.permission,
-        dataset_type: data.category || "general",
-        tags: data.tags || [],
+      const datasetPayload: CreateDatasetInformationRequest  = {
         dataset_id: uploadedFileData.dataset_id,
         file_id: uploadedFileData.file_id,
-        is_temporal: configData.isTemporal,
+        dataset_name: data.name,
+        description: data.description,
+        tags: data.tags || [],
+        dataset_type: data.category || '',
+        permission: data.permission,
         is_spatial: configData.isSpatial,
-        pulled_from_pipeline: false,
-        user_email: session?.user?.email || "",
-        user_name: session?.user?.name || "",
-        user_id: session?.user?.email || "", // Using email as user_id since id is not available
-        pipeline_id: null,
+        is_temporal: configData.isTemporal,
+        spatial_granularities: [],
+        temporal_granularities: [],
+        user_name: session?.user?.name || "default_user",
+        user_email: session?.user?.email || "default_email",
+        user_id: session?.user?.name || "default_id",
+        location_columns: [],
+        time_columns: []
       };
       console.log("Dataset payload:", datasetPayload);
 
       // Make the API call
       const response =
-        await createDatasetInformationEndpointCreateDatasetInformationPost({
+        await createDatasetDatasetsCreatePost({
           body: datasetPayload,
         });
-      console.log("Response:", response);
-
+      const responseData = response.data as CreateDatasetInformationResponse;
+      if(!responseData.status){
+        throw new Error("Failed to create dataset");
+      }
       if (response.data && response.data.status === "success") {
         toast({
           title: "Success!",
-          description: response.data.message || "Dataset created successfully.",
+          description: "Dataset created successfully.",
         });
 
         // Reset the form
@@ -206,9 +194,7 @@ export default function Create() {
         console.error("API Error:", response.error);
         toast({
           title: "Error",
-          description:
-            response.data?.message ||
-            "Failed to create dataset. Please try again.",
+          description: "Failed to create dataset. Please try again.",
           variant: "destructive",
         });
       }
@@ -447,7 +433,6 @@ export default function Create() {
         onComplete={handleConfigComplete}
         onSubmitForm={handleSubmitForm}
         isSubmitting={isSubmitting}
-        columns={uploadedFileData?.columns || []}
       />
     </ContentLayout>
   );
