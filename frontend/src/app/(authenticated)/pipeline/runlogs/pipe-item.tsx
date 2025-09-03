@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { usePipelineStatusCheck } from "@/components/hooks/check-pipeline-status";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import {
   runPipelinePipelinesRunPost,
   getPipelineStatusPipelineStatusGet,
 } from "@/lib/hey-api/client/sdk.gen";
-import { useSession } from "next-auth/react";
-import { usePipelineStatusCheck } from "@/components/hooks/check-pipeline-status";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import {
   RunPipelineRequest,
   RunPipelineResponse,
@@ -34,7 +34,7 @@ export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
   const runPipelineRequest: RunPipelineRequest = {
     pipeline_id: _id,
     pipeline_name: pipeline_name,
-    username: username,
+    user_name: username,
     user_email: useremail,
   };
 

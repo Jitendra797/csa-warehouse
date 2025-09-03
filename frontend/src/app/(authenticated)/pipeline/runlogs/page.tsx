@@ -2,9 +2,9 @@
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
-import { getPipelinesPipelinesGet } from "@/lib/hey-api/client/sdk.gen";
 import { useEffect, useState } from "react";
 import { Pipeline } from "./pipe-item";
+import { getPipelinesPipelinesGet } from "@/lib/hey-api/client/sdk.gen";
 import {
   PipelineItem,
   ResponseGetPipelines,
