@@ -1,4 +1,4 @@
-import { ContentLayout } from '@/components/admin-panel/content-layout'
+import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 export default function Settings() {
   return (
@@ -7,5 +7,5 @@ export default function Settings() {
         <h1>Settings</h1>
       </div>
     </ContentLayout>
-  )
+  );
 }

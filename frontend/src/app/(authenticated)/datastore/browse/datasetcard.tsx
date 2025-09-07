@@ -1,47 +1,106 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { formatDate } from '@/lib/utils'
-import { Mail } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
+import { Mail, User, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+
+export interface DatasetCardProps {
+  dataset_id: string;
+  dataset_name: string;
+  description: string;
+  pulled_from_pipeline: boolean;
+  usernames: string[];
+  useremails: string[];
+  updated_at: string;
+}
 
 export function DatasetCard({
-  title,
+  dataset_id,
+  dataset_name,
   description,
-  uploaderName,
-  uploaderEmail,
-  uploadDate,
-}: {
-  title: string
-  description?: string
-  uploaderName: string
-  uploaderEmail?: string
-  uploadDate: string
-}) {
+  pulled_from_pipeline,
+  usernames,
+  useremails,
+  updated_at,
+}: DatasetCardProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const usernameslength = usernames.length;
+  const useremailslength = useremails.length;
+  const username = usernames[usernameslength - 1];
+  const useremail = useremails[useremailslength - 1];
+
+  const handleOpen = async () => {
+    setIsLoading(true);
+    try {
+      await router.push(`/datastore/browse/${encodeURIComponent(dataset_id)}`);
+    } catch (error) {
+      console.error("Navigation error:", error);
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Card className="bg-background">
-      <CardHeader className="pb-3">
+    <Card className="bg-background h-[280px] flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
         <CardTitle className="text-lg font-semibold truncate">
-          {title}
+          {dataset_name}
         </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground line-clamp-2">{description}</CardDescription>
+        <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+          {description? description : "No description provided."}
+        </CardDescription>
+        <p className="text-sm font-semibold text-foreground py-2">
+          {pulled_from_pipeline ? (
+            <>
+              <span className="font-semibold">Pipeline Run on</span>{" "}
+              {formatDate(updated_at)}
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">Last Updated on</span>{" "}
+              {formatDate(updated_at)}
+            </>
+          )}
+        </p>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between pt-4 border-t border-border/20">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold text-foreground">{uploaderName}</p>
-            {uploaderEmail && (
-              <p className="text-xs text-muted-foreground flex items-center">
-                <Mail className="w-3 h-3 mr-1.5" />
-                {uploaderEmail}
-              </p>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Uploaded</p>
-            <p className="text-sm font-medium text-foreground">{formatDate(uploadDate)}</p>
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground mb-2">
+            {pulled_from_pipeline ? "Pipeline Run By" : "Dataset Created By"}
+          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground flex items-center">
+              <User className="w-3 h-3 mr-1.5" />
+              {username}
+            </p>
+            <p className="text-xs text-muted-foreground flex items-center">
+              <Mail className="w-3 h-3 mr-1.5" />
+              {useremail}
+            </p>
           </div>
         </div>
-        <Button className="w-full mt-4">Open</Button>
+        <Button
+          className="w-full mt-4"
+          onClick={handleOpen}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            "View"
+          )}
+        </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

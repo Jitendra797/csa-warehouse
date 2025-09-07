@@ -1,22 +1,22 @@
-'use client'
-import { forwardRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
+"use client";
+import { forwardRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const PasswordInput = forwardRef<
   HTMLInputElement,
-  React.ComponentProps<'input'>
+  React.ComponentProps<"input">
 >(({ className, ...props }, ref) => {
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const disabled =
-    props.value === '' || props.value === undefined || props.disabled
+    props.value === "" || props.value === undefined || props.disabled;
 
   return (
     <div className="relative">
       <Input
-        type={showPassword ? 'text' : 'password'}
-        className={cn('hide-password-toggle pr-10', className)}
+        type={showPassword ? "text" : "password"}
+        className={cn("hide-password-toggle pr-10", className)}
         ref={ref}
         {...props}
       />
@@ -34,7 +34,7 @@ const PasswordInput = forwardRef<
             <FaRegEyeSlash className="h-4 w-4" aria-hidden="true" />
           )} */}
         <span className="sr-only">
-          {showPassword ? 'Hide password' : 'Show password'}
+          {showPassword ? "Hide password" : "Show password"}
         </span>
       </Button>
 
@@ -48,8 +48,8 @@ const PasswordInput = forwardRef<
 					}
 				`}</style>
     </div>
-  )
-})
-PasswordInput.displayName = 'PasswordInput'
+  );
+});
+PasswordInput.displayName = "PasswordInput";
 
-export { PasswordInput }
+export { PasswordInput };

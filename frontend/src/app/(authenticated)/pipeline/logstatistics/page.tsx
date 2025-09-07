@@ -1,31 +1,31 @@
-import { DatePickerWithRange } from '@/components/ui/date-range-picker'
-import { Input } from '@/components/ui/input'
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Search } from 'lucide-react'
-import { DataTable } from './data-table'
-import { columns } from './columns'
-import { ContentLayout } from '@/components/admin-panel/content-layout'
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { DataTable } from "./data-table";
+import { columns } from "./columns";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 const data = [
   {
-    id: '1',
-    commands: 'Pipeline 2',
-    dateTime: '22-02-2024 10:00 AM',
-    user: 'User1',
-    status: 'Running',
-    duration: '--',
+    id: "1",
+    commands: "Pipeline 2",
+    dateTime: "22-02-2024 10:00 AM",
+    user: "User1",
+    status: "Running",
+    duration: "--",
   },
-]
+];
 
 export default function LogStatistics() {
   return (
-    <ContentLayout title="Log Statistics">
+    <ContentLayout title="Pipeline Statistics">
       <div className="h-full flex flex-col space-y-4 p-4">
         <div className="relative p-4 shrink-0">
           <Search className="absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -62,5 +62,5 @@ export default function LogStatistics() {
         <DataTable columns={columns} data={data} />
       </div>
     </ContentLayout>
-  )
+  );
 }

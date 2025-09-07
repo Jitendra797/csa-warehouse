@@ -26,6 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Paperclip } from "lucide-react";
+import { ExtractAndStoreResponse, ExtractCsvDataRequest, extractCsvDatasetsExtractPost, getPresignedUrlPresignedUrlGet, PresignedUrlResponse } from "@/lib/hey-api/client";
 
 interface FileRecord {
   fileId: number;
@@ -48,13 +49,21 @@ type FileUploaderProps = {
   value: File[] | null;
   reSelect?: boolean;
   onValueChange: (value: File[] | null) => void;
-  onUploadComplete?: (urls: number[]) => void;
+  onUploadComplete?: (
+    urls: string[],
+    fileData?: {
+      dataset_id: string;
+      file_id: string;
+      columns: string[];
+    },
+  ) => void;
   dropzoneOptions: DropzoneOptions;
   orientation?: "horizontal" | "vertical";
   authToken: string;
 };
 
-interface FileUploaderContentProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FileUploaderContentProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   orientation?: "horizontal" | "vertical";
   value?: File[] | null;
   uploadStatus?: FileUploadStatus[];
@@ -144,65 +153,66 @@ export const FileUploader = forwardRef<
         const uniqueFileName = `${fileNameWithoutExt}_${timestamp}.${fileExt}`;
 
         // Get presigned URL using SDK
-        // const presignedResponse = await createNimbusFileUploadPresignedUrl({
-        //   body: {
-        //     objectKey: uniqueFileName,
-        //   },
-        //   headers: {
-        //     Authorization: `Bearer ${authToken}`,
-        //   },
-        // });
-        // console.log("Presigned response:", presignedResponse);
+        const response = await getPresignedUrlPresignedUrlGet({
+          query: {
+            filename: uniqueFileName,
+            user_id: ""
+          },
+        });
+        const presignedUrlResponse= response.data as PresignedUrlResponse;
+        console.log("Presigned URL response:", presignedUrlResponse);
+        const upload_url = presignedUrlResponse?.upload_url;
+        const object_name = presignedUrlResponse?.object_name;
+        if (!upload_url) {
+          throw new Error("Failed to get presigned URL");
+        }
 
-        // if (presignedResponse.error) {
-        //   throw new Error("Failed to get presigned URL");
-        // }
+        // Now upload the file using the presigned URL
+        const uploadResponse = await fetch(upload_url, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
 
-        // const presignedUrl = presignedResponse.data;
-        // console.log("Presigned URL response:", presignedUrl);
-        // console.log("Type of presignedUrl:", typeof presignedUrl);
+        if (!uploadResponse.ok) {
+          throw new Error("Upload failed");
+        }
+        console.log("Upload response:", uploadResponse);
 
-        // // Now upload the file using the presigned URL
-        // const uploadResponse = await fetch(presignedUrl as string, {
-        //   method: "PUT",
-        //   body: file,
-        //   headers: {
-        //     "Content-Type": file.type,
-        //   },
-        // });
+        const extractCsvDataRequest: ExtractCsvDataRequest = {
+          file_object: object_name,
+          user_id: "",
+          user_name: "",
+        };
 
-        // if (!uploadResponse.ok) {
-        //   throw new Error("Upload failed");
-        // }
-        // console.log("Upload response:", uploadResponse);
+        // Extract CSV data after successful upload
+        const extractresponse = await extractCsvDatasetsExtractPost({
+          body: extractCsvDataRequest,
+        });
+        const extractResponseData = extractresponse.data as ExtractAndStoreResponse;
 
-        // // Make the second API call with file metadata using SDK
-        // const recordResponse = await createNimbusFilePresignedUploadRecord({
-        //   body: {
-        //     fileExt,
-        //     fileName: uniqueFileName,
-        //     fileSize: file.size,
-        //     fileType: file.type,
-        //     fileURI: presignedUrl as string,
-        //   },
-        //   headers: {
-        //     Authorization: `Bearer ${authToken}`,
-        //   },
-        // });
-
-        // if (recordResponse.error) {
-        //   throw new Error("Failed to record file metadata");
-        // }
-
-        // const recordData = recordResponse.data as NimbusFileRecord;
-        // console.log("Record data:", recordData);
-        // return recordData.fileId;
-        return 0;
+        if (!extractResponseData) {
+          throw new Error("Failed to extract CSV data");
+        }
+        const file_id = extractResponseData?.file_id;
+        if (!file_id) {
+          throw new Error("Failed to get file ID from extraction response");
+        }
+        const dataset_id = extractResponseData?.dataset_id;
+        if (!dataset_id) {
+          throw new Error("Failed to get dataset ID from extraction response");
+        }
+        return {
+          file_id,
+          dataset_id
+        }
       } catch (error) {
         console.error("Upload error:", error);
         throw error;
       }
-    }, [authToken]);
+    }, []);
 
     const onDrop = useCallback(
       async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
@@ -240,13 +250,13 @@ export const FileUploader = forwardRef<
           try {
             const uploadPromises = newValues.map(async (file, index) => {
               try {
-                const url = await uploadFile(file);
+                const fileData = await uploadFile(file);
                 setUploadStatus((prev) =>
                   prev.map((status, i) =>
                     i === index ? { ...status, status: "success" } : status,
                   ),
                 );
-                return url;
+                return fileData;
               } catch (error) {
                 setUploadStatus((prev) =>
                   prev.map((status, i) =>
@@ -259,12 +269,26 @@ export const FileUploader = forwardRef<
               }
             });
 
-            const urls = await Promise.all(uploadPromises);
-            // Filter out any undefined values and ensure only numbers are passed
-            const validUrls = urls.filter(
-              (url: number): url is number => url !== undefined,
+            const fileDataArray = await Promise.all(uploadPromises);
+            // Filter out any undefined values and extract URLs and file data
+            const validFileData = fileDataArray.filter(
+              (
+                data,
+              ): data is {
+                file_id: string;
+                dataset_id: string;
+                columns: string[];
+              } =>
+                data !== undefined &&
+                data.file_id !== undefined &&
+                data.file_id !== "",
             );
-            onUploadComplete(validUrls);
+
+            // Extract URLs for backward compatibility
+            const urls = validFileData.map((data) => data.file_id);
+
+            // Pass both URLs and file data to the callback
+            onUploadComplete(urls, validFileData[0]); // For single file upload, pass the first file data
           } catch (error) {
             console.error("Upload failed:", error);
             toast.error("Some files failed to upload");
@@ -362,7 +386,14 @@ export const FileUploader = forwardRef<
           setActiveIndex(-1);
         }
       },
-      [value, activeIndex, removeFileFromSet, direction, orientation, dropzoneState],
+      [
+        value,
+        activeIndex,
+        removeFileFromSet,
+        direction,
+        orientation,
+        dropzoneState,
+      ],
     );
 
     useEffect(() => {
@@ -378,21 +409,27 @@ export const FileUploader = forwardRef<
     const childrenWithProps = React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
         if (child.type === FileUploaderContent) {
-          return React.cloneElement(child as React.ReactElement<FileUploaderContentProps>, {
-            orientation,
-            value,
-            uploadStatus,
-            removeFileFromSet,
-            activeIndex,
-            setActiveIndex,
-          });
+          return React.cloneElement(
+            child as React.ReactElement<FileUploaderContentProps>,
+            {
+              orientation,
+              value,
+              uploadStatus,
+              removeFileFromSet,
+              activeIndex,
+              setActiveIndex,
+            },
+          );
         }
         if (child.type === FileInput) {
-          return React.cloneElement(child as React.ReactElement<FileInputProps>, {
-            dropzoneState,
-            isFileTooBig,
-            isLOF,
-          });
+          return React.cloneElement(
+            child as React.ReactElement<FileInputProps>,
+            {
+              dropzoneState,
+              isFileTooBig,
+              isLOF,
+            },
+          );
         }
       }
       return child;
@@ -424,45 +461,60 @@ FileUploader.displayName = "FileUploader";
 export const FileUploaderContent = forwardRef<
   HTMLDivElement,
   FileUploaderContentProps
->(({ children, className, orientation = "vertical", value = null, uploadStatus = [], removeFileFromSet, activeIndex = -1, setActiveIndex, ...props }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+>(
+  (
+    {
+      children,
+      className,
+      orientation = "vertical",
+      value = null,
+      uploadStatus = [],
+      removeFileFromSet,
+      activeIndex = -1,
+      setActiveIndex,
+      ...props
+    },
+    ref,
+  ) => {
+    const containerRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div
-      className={cn("w-full px-1")}
-      ref={containerRef}
-      aria-description="content file holder"
-    >
+    return (
       <div
-        {...props}
-        ref={ref}
-        className={cn(
-          "flex rounded-xl gap-1",
-          orientation === "horizontal" ? "flex-raw flex-wrap" : "flex-col",
-          className,
-        )}
+        className={cn("w-full px-1")}
+        ref={containerRef}
+        aria-description="content file holder"
       >
-        {value &&
-          value.length > 0 &&
-          value.map((file, i) => {
-            const status = uploadStatus[i];
-            return (
-              <FileUploaderItem
-                key={i}
-                file={file}
-                index={i}
-                uploadStatus={status?.status || "uploading"}
-                removeFileFromSet={removeFileFromSet!}
-                activeIndex={activeIndex}
-                setActiveIndex={setActiveIndex!}
-              />
-            );
-          })}
-        {children}
+        <div
+          {...props}
+          ref={ref}
+          className={cn(
+            "flex rounded-xl gap-1",
+            orientation === "horizontal" ? "flex-raw flex-wrap" : "flex-col",
+            className,
+          )}
+        >
+          {value &&
+            value.length > 0 &&
+            value.map((file, i) => {
+              const status = uploadStatus[i];
+              return (
+                <FileUploaderItem
+                  key={i}
+                  file={file}
+                  index={i}
+                  uploadStatus={status?.status || "uploading"}
+                  removeFileFromSet={removeFileFromSet!}
+                  activeIndex={activeIndex}
+                  setActiveIndex={setActiveIndex!}
+                />
+              );
+            })}
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 FileUploaderContent.displayName = "FileUploaderContent";
 
@@ -526,51 +578,64 @@ export const FileUploaderItem = ({
 
 FileUploaderItem.displayName = "FileUploaderItem";
 
-export const FileInput = forwardRef<
-  HTMLDivElement,
-  FileInputProps
->(({ className, children, dropzoneState, isFileTooBig = false, isLOF = false, ...props }, ref) => {
-  // If dropzoneState is not provided, create a fallback (this shouldn't happen in normal usage)
-  if (!dropzoneState) {
-    console.warn("FileInput: dropzoneState not provided. Component may not function correctly.");
+export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
+  (
+    {
+      className,
+      children,
+      dropzoneState,
+      isFileTooBig = false,
+      isLOF = false,
+      ...props
+    },
+    ref,
+  ) => {
+    // If dropzoneState is not provided, create a fallback (this shouldn't happen in normal usage)
+    if (!dropzoneState) {
+      console.warn(
+        "FileInput: dropzoneState not provided. Component may not function correctly.",
+      );
+      return (
+        <div ref={ref} {...props} className={className}>
+          {children}
+        </div>
+      );
+    }
+
+    const rootProps = isLOF ? {} : dropzoneState.getRootProps();
     return (
-      <div ref={ref} {...props} className={className}>
-        {children}
+      <div
+        ref={ref}
+        {...props}
+        className={`relative w-full ${
+          isLOF ? "opacity-50 cursor-not-allowed " : "cursor-pointer "
+        }`}
+      >
+        <div
+          className={cn(
+            `w-full rounded-lg duration-300 ease-in-out
+         ${
+           dropzoneState.isDragAccept
+             ? "border-green-500"
+             : dropzoneState.isDragReject || isFileTooBig
+               ? "border-red-500"
+               : "border-gray-300"
+         }`,
+            className,
+          )}
+          {...rootProps}
+        >
+          {children}
+        </div>
+        <Input
+          ref={dropzoneState.inputRef}
+          disabled={isLOF}
+          {...dropzoneState.getInputProps()}
+          className={`${isLOF ? "cursor-not-allowed" : ""}`}
+        />
       </div>
     );
-  }
-
-  const rootProps = isLOF ? {} : dropzoneState.getRootProps();
-  return (
-    <div
-      ref={ref}
-      {...props}
-      className={`relative w-full ${isLOF ? "opacity-50 cursor-not-allowed " : "cursor-pointer "
-        }`}
-    >
-      <div
-        className={cn(
-          `w-full rounded-lg duration-300 ease-in-out
-         ${dropzoneState.isDragAccept
-            ? "border-green-500"
-            : dropzoneState.isDragReject || isFileTooBig
-              ? "border-red-500"
-              : "border-gray-300"
-          }`,
-          className,
-        )}
-        {...rootProps}
-      >
-        {children}
-      </div>
-      <Input
-        ref={dropzoneState.inputRef}
-        disabled={isLOF}
-        {...dropzoneState.getInputProps()}
-        className={`${isLOF ? "cursor-not-allowed" : ""}`}
-      />
-    </div>
-  );
-});
+  },
+);
 
 FileInput.displayName = "FileInput";

@@ -1,32 +1,27 @@
-'use client'
+"use client";
 
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card'
-import { Bar, BarChart, CartesianGrid, YAxis, Cell } from 'recharts'
+import { Card, CardContent } from "@/components/ui/card";
+import { Bar, BarChart, CartesianGrid, YAxis, Cell } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart'
+} from "@/components/ui/chart";
 
 interface GraphViewProps {
-  data: []
+  data: [];
 }
 
 const chartConfig = {
   yieldPerHectare: {
-    label: 'Yield Per Hectare',
-    color: 'hsl(var(--chart-1))',
+    label: "Yield Per Hectare",
+    color: "hsl(var(--chart-1))",
   },
-}
-
-
+};
 
 export function GraphView({ data }: GraphViewProps) {
   return (
-    <Card className='h-[450px'>
+    <Card className="h-[450px">
       <CardContent className="h-[400px]">
         <ChartContainer config={chartConfig}>
           <div className="w-full overflow-x-auto">
@@ -49,7 +44,10 @@ export function GraphView({ data }: GraphViewProps) {
               />
               <Bar dataKey="YieldPerHectare" radius={[4, 4, 0, 0]}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={chartConfig.yieldPerHectare.color} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={chartConfig.yieldPerHectare.color}
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -57,5 +55,5 @@ export function GraphView({ data }: GraphViewProps) {
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

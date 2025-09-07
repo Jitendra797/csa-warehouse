@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import * as React from "react";
+import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TagInputProps {
-  value: string[]
-  onChange: (value: string[]) => void
-  placeholder?: string
-  className?: string
-  maxTags?: number
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  className?: string;
+  maxTags?: number;
 }
 
 export function TagInput({
@@ -22,36 +22,32 @@ export function TagInput({
   className,
   maxTags = 10,
 }: TagInputProps) {
-  const [inputValue, setInputValue] = React.useState('')
+  const [inputValue, setInputValue] = React.useState("");
 
   const addTag = (tag: string) => {
-    const trimmedTag = tag.trim()
-    if (
-      trimmedTag &&
-      !value.includes(trimmedTag) &&
-      value.length < maxTags
-    ) {
-      onChange([trimmedTag, ...value])
-      setInputValue('')
+    const trimmedTag = tag.trim();
+    if (trimmedTag && !value.includes(trimmedTag) && value.length < maxTags) {
+      onChange([trimmedTag, ...value]);
+      setInputValue("");
     }
-  }
+  };
 
   const removeTag = (tagToRemove: string) => {
-    onChange(value.filter(tag => tag !== tagToRemove))
-  }
+    onChange(value.filter((tag) => tag !== tagToRemove));
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(inputValue)
-    } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      removeTag(value[0])
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(inputValue);
+    } else if (e.key === "Backspace" && !inputValue && value.length > 0) {
+      removeTag(value[0]);
     }
-  }
+  };
 
   const handleBlur = () => {
-    addTag(inputValue)
-  }
+    addTag(inputValue);
+  };
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -78,14 +74,14 @@ export function TagInput({
             ))}
           </div>
         )}
-        
+
         {value.length < maxTags && (
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            placeholder={value.length === 0 ? placeholder : 'Add more tags...'}
+            placeholder={value.length === 0 ? placeholder : "Add more tags..."}
             className="border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         )}
@@ -96,5 +92,5 @@ export function TagInput({
         </p>
       )}
     </div>
-  )
-} 
+  );
+}

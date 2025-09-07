@@ -1,19 +1,24 @@
-'use client'
-import { useState } from 'react'
-import { BarChart2, Map, Table2 } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TableView } from './table-view'
-import { GraphView } from './graph-view'
-import { MapView } from './map-view'
-import { ContentLayout } from '@/components/admin-panel/content-layout'
+"use client";
+import { useState } from "react";
+import { BarChart2, Map, Table2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TableView } from "./table-view";
+import { GraphView } from "./graph-view";
+import { MapView } from "./map-view";
+import { ContentLayout } from "@/components/admin-panel/content-layout";
 
 export default function Visualize() {
-  const [tab, setTab] = useState('table')
+  const [tab, setTab] = useState("table");
 
   return (
     <ContentLayout title="Visualize">
       <div className="space-y-8 p-6">
-        <Tabs defaultValue="table" value={tab} onValueChange={setTab} className="w-full">
+        <Tabs
+          defaultValue="table"
+          value={tab}
+          onValueChange={setTab}
+          className="w-full"
+        >
           <div className="flex items-center justify-between mb-6">
             <TabsList className="grid w-[400px] grid-cols-3">
               <TabsTrigger value="table" className="flex items-center gap-2">
@@ -30,18 +35,17 @@ export default function Visualize() {
               </TabsTrigger>
             </TabsList>
           </div>
-          <TabsContent value="table" >
+          <TabsContent value="table">
             <TableView data={[]} />
           </TabsContent>
-          <TabsContent value="graph" >
+          <TabsContent value="graph">
             <GraphView data={[]} />
           </TabsContent>
-          <TabsContent value="map" >
+          <TabsContent value="map">
             <MapView data={[]} />
           </TabsContent>
         </Tabs>
       </div>
     </ContentLayout>
-  )
+  );
 }
-
