@@ -19,7 +19,10 @@ dependencies = [
     "pandas", 
     "pydantic-settings",
     "python-multipart",
-    "csa-erp-client @ git+https://github.com/Agriworks/erpnext_client.git"
+    "csa-erp-client @ git+https://github.com/Agriworks/erpnext_client.git",
+    "mangum",
+    "boto3",
+    "dnspython",
 ]
 
 [tool.poetry]
