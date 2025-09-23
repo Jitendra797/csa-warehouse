@@ -1,9 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints.pipelines.pipeline import run_router
-from app.api.endpoints.datasets.datasets import datasets_router 
+from app.api.endpoints.datasets.datasets import datasets_router
 from app.api.endpoints.datasets.manage import manage_router
 from app.api.endpoints.datasets.dataset_info import dataset_info_router
+from app.api.endpoints.users.users import router as user_router
+from app.api.endpoints.users.role_check import router as role_check_router
+from app.auth.token_middleware import TokenAuthMiddleware
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
 app = FastAPI()
 
@@ -16,7 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Attach middleware that extracts external_id from Bearer token
+app.add_middleware(TokenAuthMiddleware)
+
 app.include_router(run_router)
-app.include_router(datasets_router) 
+app.include_router(datasets_router)
 app.include_router(manage_router)
 app.include_router(dataset_info_router)
+app.include_router(user_router)
+app.include_router(role_check_router)
