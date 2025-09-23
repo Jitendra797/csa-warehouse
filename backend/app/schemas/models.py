@@ -246,19 +246,72 @@ class Tag(BaseModel):
     name: str = Field(..., description="Name of the tag")
 
 
+class Role(BaseModel):
+    """
+    Role object representing a user role.
+    """
+    role_name: str = Field(..., description="Name of the role")
+    description: str | None = Field(
+        None, description="Description of the role")
+    is_active: bool = Field(
+        default=True, description="Whether the role is active")
+    created_at: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the role was created")
+    updated_at: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the role was last updated")
+
+
 class User(BaseModel):
     """
     User object.
     """
-    id: UUID = Field(..., description="Unique user ID (UUID)")
-    username: Optional[str] = Field(None, description="Username")
-    firstName: Optional[str] = Field(
+    first_name: Optional[str] = Field(
         None, description="First name of the user")
-    lastName: Optional[str] = Field(None, description="Last name of the user")
+    last_name: Optional[str] = Field(None, description="Last name of the user")
     email: Optional[str] = Field(
         None, description="Email address", example="name@email.com")
-    organisation: Optional[str] = Field(
-        None, description="Organisation of the user")
+    phone: Optional[str] = Field(None, description="Phone number")
+    external_id: str = Field(...,
+                             description="External ID from OAuth provider (e.g., Google sub)")
+    role_id: Optional[str] = Field(
+        None, description="Role ID from roles collection")
+    created_at: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the user was created")
+    updated_at: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the user was last updated")
+
+
+class CreateUserFromOAuth(BaseModel):
+    """
+    Schema for creating user from OAuth provider data.
+    """
+    first_name: Optional[str] = Field(
+        None, description="First name of the user")
+    last_name: Optional[str] = Field(None, description="Last name of the user")
+    email: Optional[str] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    external_id: str = Field(...,
+                             description="External ID from OAuth provider (e.g., Google sub)")
+
+
+class UserResponse(BaseModel):
+    """
+    User response object.
+    """
+    id: str = Field(..., description="Unique user ID (UUID)")
+    first_name: Optional[str] = Field(
+        None, description="First name of the user")
+    last_name: Optional[str] = Field(None, description="Last name of the user")
+    email: Optional[str] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    external_id: str = Field(...,
+                             description="External ID from OAuth provider")
+    role_id: Optional[str] = Field(
+        None, description="Role ID assigned to the user")
+    created_at: datetime = Field(...,
+                                 description="Timestamp when the user was created")
+    updated_at: datetime = Field(...,
+                                 description="Timestamp when the user was last updated")
 
 
 class ApiResponse(BaseModel):
@@ -269,6 +322,38 @@ class ApiResponse(BaseModel):
     type: Optional[str] = Field(None, description="Type of response")
     message: Optional[str] = Field(
         None, description="Message accompanying the response")
+
+
+class EndpointAccess(BaseModel):
+    """
+    Endpoint access control object.
+    """
+    role: str = Field(..., description="Role name")
+    endpoint: str = Field(..., description="Endpoint path pattern")
+    viewer: bool = Field(default=False, description="Viewer permission")
+    contributor: bool = Field(
+        default=False, description="Contributor permission")
+    admin: bool = Field(default=False, description="Admin permission")
+    created_time: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the access control was created")
+
+
+class RoleCheckRequest(BaseModel):
+    """
+    Request schema for role checking.
+    """
+    path: str = Field(..., description="Path to check access for")
+
+
+class RoleCheckResponse(BaseModel):
+    """
+    Response schema for role checking.
+    """
+    viewer: bool = Field(default=False, description="Viewer permission")
+    contributor: bool = Field(
+        default=False, description="Contributor permission")
+    admin: bool = Field(default=False, description="Admin permission")
+    role_name: Optional[str] = Field(None, description="User's role name")
 
 
 class Error(BaseModel):
