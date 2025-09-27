@@ -30,17 +30,15 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
                 if len(parts) >= 2:
                     payload_b64 = parts[1]
                     # Fix padding for base64url
-                    padding = '=' * (-len(payload_b64) % 4)
-                    payload_bytes = base64.urlsafe_b64decode(
-                        payload_b64 + padding)
+                    padding = "=" * (-len(payload_b64) % 4)
+                    payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
                     payload = json.loads(payload_bytes.decode("utf-8"))
                     sub = payload.get("sub")
                     if isinstance(sub, str) and sub:
                         external_id = sub
             except Exception as e:
                 # If parsing fails, leave external_id as None; endpoint can decide how to handle
-                logger.warning(
-                    "Failed to parse Authorization header JWT: %s", e)
+                logger.warning("Failed to parse Authorization header JWT: %s", e)
                 external_id = None
         else:
             if authorization_header is None:
@@ -49,7 +47,6 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
                 logger.debug("Authorization header present but malformed")
 
         request.state.external_id = external_id
-        logger.debug(
-            "Request external_id resolved by middleware: %s", external_id)
+        logger.debug("Request external_id resolved by middleware: %s", external_id)
         response = await call_next(request)
         return response

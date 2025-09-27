@@ -6,7 +6,15 @@ from pymongo.collection import Collection
 from app.schemas.models import CreateDatasetInformationRequest
 from app.db.database import datasets_collection, dataset_information_collection
 
-def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str, dataset_records: List[Dict[str, Any]]) -> Dict[str, Any]: 
+
+def store_to_mongodb(
+    dataset_id: str,
+    dataset_name: str,
+    user_id: str,
+    username: str,
+    user_email: str,
+    dataset_records: List[Dict[str, Any]],
+) -> Dict[str, Any]:
     current_time = datetime.now(timezone.utc).isoformat()
 
     # First check if dataset_id already exists in datasets_collection
@@ -18,46 +26,30 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
 
         datasets_collection.update_one(
             {"_id": dataset_id},
-            {
-                "$set": {
-                    "data": dataset_records,
-                    "columns": columns,
-                    "record_count": len(dataset_records)
-                }
-            }
+            {"$set": {"data": dataset_records, "columns": columns, "record_count": len(dataset_records)}},
         )
 
         # Check if dataset information exists for this dataset_id
-        existing_info = dataset_information_collection.find_one(
-            {"dataset_id": dataset_id})
+        existing_info = dataset_information_collection.find_one({"dataset_id": dataset_id})
 
         if existing_info:
             # Update dataset information
             dataset_information_collection.update_one(
-                {"_id": existing_info["_id"]},
-                {
-                    "$set": {
-                        "updated_at": current_time,
-                        "pulled_from_pipeline": True
-                    }
-                }
+                {"_id": existing_info["_id"]}, {"$set": {"updated_at": current_time, "pulled_from_pipeline": True}}
             )
 
             # Add user_id, username, and email to arrays (using separate addToSet operations)
             if user_id not in existing_info.get("user_id", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"user_id": user_id}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"user_id": user_id}}
                 )
             if username not in existing_info.get("username", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"username": username}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"username": username}}
                 )
             if user_email and user_email not in existing_info.get("user_email", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"user_email": user_email}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"user_email": user_email}}
                 )
         else:
             # Create new dataset information document for existing data
@@ -78,7 +70,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "updated_at": current_time,
                 "user_id": [user_id],
                 "user_name": [username],
-                "user_email": [user_email] if user_email else []
+                "user_email": [user_email] if user_email else [],
             }
             dataset_information_collection.insert_one(dataset_info_doc)
 
@@ -89,56 +81,39 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
             "dataset_id": dataset_id,
             "dataset_name": dataset_name,
             "record_count": len(dataset_records),
-            "created_at": existing_info["created_at"] if existing_info else current_time
+            "created_at": existing_info["created_at"] if existing_info else current_time,
         }
 
     else:
         # Check if dataset information exists by name (in case dataset_id is new but name exists)
-        existing_info = dataset_information_collection.find_one(
-            {"dataset_name": dataset_name})
+        existing_info = dataset_information_collection.find_one({"dataset_name": dataset_name})
 
         if existing_info and existing_info["dataset_id"] != dataset_id:
             # Dataset name exists but with different ID - update the existing data document
-            columns = list(dataset_records[0].keys()
-                           ) if dataset_records else []
+            columns = list(dataset_records[0].keys()) if dataset_records else []
 
             datasets_collection.update_one(
                 {"_id": existing_info["dataset_id"]},
-                {
-                    "$set": {
-                        "data": dataset_records,
-                        "columns": columns,
-                        "record_count": len(dataset_records)
-                    }
-                }
+                {"$set": {"data": dataset_records, "columns": columns, "record_count": len(dataset_records)}},
             )
 
             # Update information document
             dataset_information_collection.update_one(
-                {"_id": existing_info["_id"]},
-                {
-                    "$set": {
-                        "updated_at": current_time,
-                        "pulled_from_pipeline": True
-                    }
-                }
+                {"_id": existing_info["_id"]}, {"$set": {"updated_at": current_time, "pulled_from_pipeline": True}}
             )
 
             # Add user info using separate addToSet operations
             if user_id not in existing_info.get("user_id", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"user_id": user_id}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"user_id": user_id}}
                 )
             if username not in existing_info.get("username", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"username": username}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"username": username}}
                 )
             if user_email and user_email not in existing_info.get("user_email", []):
                 dataset_information_collection.update_one(
-                    {"_id": existing_info["_id"]},
-                    {"$addToSet": {"user_email": user_email}}
+                    {"_id": existing_info["_id"]}, {"$addToSet": {"user_email": user_email}}
                 )
 
             return {
@@ -148,18 +123,17 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "dataset_id": existing_info["dataset_id"],
                 "dataset_name": dataset_name,
                 "record_count": len(dataset_records),
-                "created_at": existing_info["created_at"]
+                "created_at": existing_info["created_at"],
             }
         else:
             # Create completely new dataset (both data and information)
-            columns = list(dataset_records[0].keys()
-                           ) if dataset_records else []
+            columns = list(dataset_records[0].keys()) if dataset_records else []
 
             dataset_doc = {
                 "_id": dataset_id,  # Use the provided dataset_id
                 "data": dataset_records,
                 "columns": columns,
-                "record_count": len(dataset_records)
+                "record_count": len(dataset_records),
             }
 
             datasets_collection.insert_one(dataset_doc)
@@ -178,16 +152,16 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "permissions": "public",
                 "is_spatial": False,
                 "is_temporal": False,
-                "temporal_granularities": [], 
+                "temporal_granularities": [],
                 "spatial_granularities": [],
-                "location_columns": [], 
+                "location_columns": [],
                 "time_columns": [],
                 "pulled_from_pipeline": True,
                 "created_at": current_time,
                 "updated_at": current_time,
                 "user_id": [user_id],
                 "user_name": [username],
-                "user_email": [user_email] if user_email else []
+                "user_email": [user_email] if user_email else [],
             }
 
             dataset_information_collection.insert_one(dataset_info_doc)
@@ -199,7 +173,7 @@ def store_to_mongodb(dataset_id: str, dataset_name: str, user_id: str, username:
                 "dataset_id": dataset_id,
                 "dataset_name": dataset_name,
                 "record_count": len(dataset_records),
-                "created_at": dataset_info_doc["created_at"]
+                "created_at": dataset_info_doc["created_at"],
             }
 
 
@@ -216,7 +190,10 @@ def sanitize_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     doc["_id"] = str(doc["_id"])
     return {k: sanitize_value(v) for k, v in doc.items()}
 
-def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional[str] = None) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+
+def get_data_from_collection(
+    dataset_id: Optional[str] = None, user_id: Optional[str] = None
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     try:
         if dataset_id:
             info_doc = dataset_information_collection.find_one({"dataset_id": dataset_id})
@@ -246,9 +223,9 @@ def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional
                 "permissions": info_doc.get("permissions", ""),
                 "is_spatial": info_doc.get("is_spatial", False),
                 "is_temporial": info_doc.get("is_temporial", False),
-                "temporal_granularities": info_doc.get("temporal_granularities", []), 
+                "temporal_granularities": info_doc.get("temporal_granularities", []),
                 "spatial_granularities": info_doc.get("spatial_granularities", []),
-                "location_columns": info_doc.get("location_columns", []), 
+                "location_columns": info_doc.get("location_columns", []),
                 "time_columns": info_doc.get("time_columns", []),
                 "pulled_from_pipeline": info_doc.get("pulled_from_pipeline", False),
                 "created_at": info_doc.get("created_at"),
@@ -256,7 +233,7 @@ def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional
                 "user_id": info_doc.get("user_id") or [],
                 "user_name": info_doc.get("user_name") or [],
                 "user_email": info_doc.get("user_email") or [],
-                "rows": data_rows
+                "rows": data_rows,
             }
 
         else:
@@ -280,42 +257,40 @@ def get_data_from_collection(dataset_id: Optional[str] = None, user_id: Optional
                         for row in rows:
                             data_rows.append({col: row.get(col) for col in selected_columns})
 
-                results.append({
-                    "dataset_name": doc.get("dataset_name", ""),
-                    "dataset_id": doc.get("dataset_id"),
-                    "file_id": doc.get("file_id", ""),
-                    "description": doc.get("description", ""),
-                    "tags": doc.get("tags", []),
-                    "dataset_type": doc.get("dataset_type", ""),
-                    "permissions": doc.get("permissions", ""),
-                    "is_spatial": doc.get("is_spatial", False),
-                    "is_temporial": doc.get("is_temporial", False),
-                    "pulled_from_pipeline": doc.get("pulled_from_pipeline", False),
-                    "created_at": doc.get("created_at"),
-                    "updated_at": doc.get("updated_at"),
-                    "user_id": doc.get("user_id") or [],
-                    "user_name": doc.get("user_name") or [],
-                    "user_email": doc.get("user_email") or [],
-                    # "rows": data_rows
-                })
-            print(results) 
+                results.append(
+                    {
+                        "dataset_name": doc.get("dataset_name", ""),
+                        "dataset_id": doc.get("dataset_id"),
+                        "file_id": doc.get("file_id", ""),
+                        "description": doc.get("description", ""),
+                        "tags": doc.get("tags", []),
+                        "dataset_type": doc.get("dataset_type", ""),
+                        "permissions": doc.get("permissions", ""),
+                        "is_spatial": doc.get("is_spatial", False),
+                        "is_temporial": doc.get("is_temporial", False),
+                        "pulled_from_pipeline": doc.get("pulled_from_pipeline", False),
+                        "created_at": doc.get("created_at"),
+                        "updated_at": doc.get("updated_at"),
+                        "user_id": doc.get("user_id") or [],
+                        "user_name": doc.get("user_name") or [],
+                        "user_email": doc.get("user_email") or [],
+                        # "rows": data_rows
+                    }
+                )
+            print(results)
             return results
 
     except Exception as e:
         raise RuntimeError(f"Error fetching documents: {e}")
-    
+
+
 def create_manual_dataset(request: CreateDatasetInformationRequest) -> Dict[str, Any]:
     try:
         current_time = datetime.now(timezone.utc).isoformat()
 
         # Create empty dataset data document first
         data_doc_id = uuid4().hex
-        dataset_doc = {
-            "_id": data_doc_id,
-            "data": [],
-            "columns": [],
-            "record_count": 0
-        }
+        dataset_doc = {"_id": data_doc_id, "data": [], "columns": [], "record_count": 0}
 
         datasets_collection.insert_one(dataset_doc)
 
@@ -337,7 +312,7 @@ def create_manual_dataset(request: CreateDatasetInformationRequest) -> Dict[str,
             "updated_at": current_time,
             "user_id": [request.user_id],
             "user_name": [request.user_name],
-            "user_email": [request.user_email]
+            "user_email": [request.user_email],
         }
 
         # Insert the information document
@@ -349,11 +324,8 @@ def create_manual_dataset(request: CreateDatasetInformationRequest) -> Dict[str,
             "dataset_id": data_doc_id,
             "message": "Dataset information created successfully",
             "created_at": current_time,
-            "updated_at": current_time
+            "updated_at": current_time,
         }
 
     except Exception as e:
-        return {
-            "success": False,
-            "message": f"Failed to create dataset information: {str(e)}"
-        }
+        return {"success": False, "message": f"Failed to create dataset information: {str(e)}"}

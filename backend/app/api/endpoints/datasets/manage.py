@@ -8,14 +8,12 @@ manage_router = APIRouter()
 #         "message": "will return all user datasets"
 #     }
 
+
 @manage_router.put("/datasets/{dataset_id}/edit")
 def edit_dataset(dataset_id):
-    return {
-        "message": "will edit an existing dataset"
-    }
+    return {"message": "will edit an existing dataset"}
+
 
 @manage_router.delete("/datasets/{dataset_id}")
 def delete_dataset(dataset_id):
-    return {
-        "message" : "will delete a dataset"
-    }
+    return {"message": "will delete a dataset"}

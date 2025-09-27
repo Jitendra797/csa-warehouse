@@ -1,5 +1,5 @@
 import os
-import json 
+import json
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -11,16 +11,19 @@ setup_logging()
 logger = get_logger("services.erp")
 load_dotenv()
 
-def get_dataset_with_fields(client: ERPNextClient, dataset_id: str, fields: list = None, limit_page_length: int = 10) -> pd.DataFrame:
+
+def get_dataset_with_fields(
+    client: ERPNextClient, dataset_id: str, fields: list = None, limit_page_length: int = 10
+) -> pd.DataFrame:
     if fields is None:
         fields = ["*"]
-        
+
     endpoint = f"{client.base_url}/api/resource/{dataset_id}"
     fields_json = str(fields).replace("'", '"')
 
     params = {
-        'limit_page_length': limit_page_length,
-        'fields': json.dumps(fields),
+        "limit_page_length": limit_page_length,
+        "fields": json.dumps(fields),
     }
 
     response = client.session.get(endpoint, params=params)
@@ -28,6 +31,7 @@ def get_dataset_with_fields(client: ERPNextClient, dataset_id: str, fields: list
 
     records = response.json().get("data", [])
     return pd.DataFrame(records)
+
 
 def pull_dataset(pipeline_id: str) -> pd.DataFrame:
     erp_uri = os.getenv("ERP_URI")
@@ -60,7 +64,9 @@ def pull_dataset(pipeline_id: str) -> pd.DataFrame:
             return sync_data
         except Exception as dataset_error:
             if "404" in str(dataset_error) or "NOT FOUND" in str(dataset_error):
-                logger.warning(f"Dataset '{dataset_name}' not found in ERP system. This might be expected for some datasets.")
+                logger.warning(
+                    f"Dataset '{dataset_name}' not found in ERP system. This might be expected for some datasets."
+                )
                 # Return empty DataFrame instead of raising error
                 return pd.DataFrame()
             else:

@@ -10,28 +10,20 @@ from app.db.crud import (
     ensure_default_role_and_get_id,
     get_role_by_name,
     create_role,
-    initialize_default_endpoint_access
+    initialize_default_endpoint_access,
 )
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def create_default_roles():
     """Create default roles if they don't exist."""
     roles_to_create = [
-        {
-            "role_name": "user",
-            "description": "Default role for regular users - can view and browse data"
-        },
-        {
-            "role_name": "admin",
-            "description": "Administrator role - can manage data and users"
-        },
-        {
-            "role_name": "superadmin",
-            "description": "Super administrator role - full system access"
-        }
+        {"role_name": "user", "description": "Default role for regular users - can view and browse data"},
+        {"role_name": "admin", "description": "Administrator role - can manage data and users"},
+        {"role_name": "superadmin", "description": "Super administrator role - full system access"},
     ]
 
     created_roles = []
@@ -43,7 +35,7 @@ def create_default_roles():
                 description=role_data["description"],
                 is_active=True,
                 created_at=datetime.now(),
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             )
             create_role(role)
             created_roles.append(role_data["role_name"])
@@ -72,8 +64,7 @@ def main():
         return False
 
     print("\n🎉 Initialization completed successfully!")
-    print(
-        f"Created {len(created_roles)} new roles: {', '.join(created_roles)}")
+    print(f"Created {len(created_roles)} new roles: {', '.join(created_roles)}")
     print("\nDefault endpoint access rules:")
     print("- user: Can access /dashboard, /datastore/browse, /settings, /about, /support")
     print("- admin: Can access all pages including /pipeline and /usermanagement")

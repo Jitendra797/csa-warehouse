@@ -19,10 +19,9 @@ def sync_user_from_oauth(user_data: CreateUserFromOAuth):
             external_id=user.get("external_id", ""),
             role_id=user.get("role_id"),
             created_at=user.get("created_at"),
-            updated_at=user.get("updated_at")
+            updated_at=user.get("updated_at"),
         )
     except Exception as e:
         print("sync_user_from_oauth error:", repr(e))
         traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Failed to sync user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to sync user: {str(e)}")

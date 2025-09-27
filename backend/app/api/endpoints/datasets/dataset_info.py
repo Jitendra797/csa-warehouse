@@ -1,48 +1,52 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List
 from app.services.storage.mongodb_service import get_data_from_collection
 from app.schemas.models import DatasetInfoResponse, BrowseResponse, ManageResponse
 
 dataset_info_router = APIRouter()
 
-@dataset_info_router.get("/datasets", response_model = BrowseResponse)
+
+@dataset_info_router.get("/datasets", response_model=BrowseResponse)
 async def get_datasets() -> BrowseResponse:
     data = get_data_from_collection()
     # print(data)
-    return BrowseResponse(data = data)
+    return BrowseResponse(data=data)
 
-@dataset_info_router.get("/dataset", response_model = DatasetInfoResponse) 
+
+@dataset_info_router.get("/dataset", response_model=DatasetInfoResponse)
 async def get_dataset_info(id: str) -> DatasetInfoResponse:
     try:
-        dataset = get_data_from_collection(dataset_id = id)
-        
+        dataset = get_data_from_collection(dataset_id=id)
+
         if not dataset or dataset == []:
-            raise HTTPException(
-                status_code = 404,
-                detail = "Dataset not found"
-            )
-        # print(dataset) 
-        return DatasetInfoResponse(status = "success", data = dataset) 
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code = 500,
-            detail = f"Internal server error: {str(e)}"
-        )
-    
-@dataset_info_router.get("/user/datasets", response_model = ManageResponse)
-async def get_user_datasets(user_id: str) -> ManageResponse:
-    try:
-        datasets = get_data_from_collection(user_id = user_id)
-        
-        return ManageResponse(data = datasets) 
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        # print(dataset)
+        return DatasetInfoResponse(status="success", data=dataset)
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code = 500,
-            detail = f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@dataset_info_router.get("/user/datasets", response_model=ManageResponse)
+async def get_user_datasets(fastapi_request: Request, authorization: str = Header(None)) -> ManageResponse:
+    try:
+        # Prefer external_id extracted by middleware; fallback to parsing Authorization header
+        external_id = getattr(fastapi_request.state, "external_id", None)
+        if not external_id and authorization:
+            # Lazy import to avoid circular import at module level
+            from app.api.endpoints.users.role_check import extract_user_id_from_token
+
+            external_id = extract_user_id_from_token(authorization)
+
+        if not external_id:
+            raise HTTPException(status_code=401, detail="Missing external id from token")
+
+        datasets = get_data_from_collection(user_id=external_id)
+        return ManageResponse(data=datasets)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
