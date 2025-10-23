@@ -19,7 +19,10 @@ dependencies = [
     "pandas", 
     "pydantic-settings",
     "python-multipart",
-    "csa-erp-client @ git+https://github.com/Agriworks/erpnext_client.git"
+    "csa-erp-client @ git+https://github.com/Agriworks/erpnext_client.git",
+    "mangum",
+    "boto3",
+    "dnspython",
 ]
 
 [tool.poetry]
@@ -44,7 +47,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 120
 target-version = ["py310"]
-skip-string-normalization = true
 
 [tool.isort]
 profile = "black"

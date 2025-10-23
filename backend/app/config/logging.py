@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Any
 from app.config.settings import get_settings
 
+
 def setup_logging() -> None:
     settings = get_settings()
 
@@ -20,7 +21,6 @@ def setup_logging() -> None:
     logging_config: Dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
-
         "formatters": {
             "console": {
                 "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -28,20 +28,16 @@ def setup_logging() -> None:
             # Detailed formatter for file logs
             "detailed": {
                 "format": (
-                    "%(asctime)s - %(levelname)s - %(name)s - "
-                    "%(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+                    "%(asctime)s - %(levelname)s - %(name)s - " "%(filename)s:%(lineno)d - %(funcName)s - %(message)s"
                 ),
             },
             # JSON formatter for structured logs
             "json": {
                 "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-                "fmt": (
-                    "timestamp levelname name filename lineno funcName message"
-                ),
+                "fmt": ("timestamp levelname name filename lineno funcName message"),
                 "datefmt": "%Y-%m-%dT%H:%M:%S%z",
             },
         },
-
         "handlers": {
             # Console output handler
             "console": {
@@ -50,7 +46,6 @@ def setup_logging() -> None:
                 "level": "INFO",
                 "stream": "ext://sys.stdout",
             },
-
             # Rotating file handler for general app logs (INFO and DEBUG)
             "app_file": {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -62,7 +57,6 @@ def setup_logging() -> None:
                 "formatter": "detailed",
                 "level": "DEBUG" if settings.debug else "INFO",
             },
-
             # Rotating file handler for JSON formatted error logs
             "error_file": {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -75,7 +69,6 @@ def setup_logging() -> None:
                 "level": "ERROR",
             },
         },
-
         "loggers": {
             # Root logger captures logs from all libraries
             "": {
@@ -132,17 +125,15 @@ def setup_logging() -> None:
         import pythonjsonlogger
     except ImportError:
         # Fall back to simpler formatters if jsonlogger not installed
-        logging.warning(
-            "python-json-logger not installed, JSON formatting will fallback to plain text."
-        )
-        logging_config["formatters"]["json"] = {
-            "format": "%(asctime)s - %(levelname)s - %(message)s"
-        }
+        logging.warning("python-json-logger not installed, JSON formatting will fallback to plain text.")
+        logging_config["formatters"]["json"] = {"format": "%(asctime)s - %(levelname)s - %(message)s"}
 
     logging.config.dictConfig(logging_config)
 
+
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(f"app.{name}")
+
 
 class LoggerMixin:
     @property

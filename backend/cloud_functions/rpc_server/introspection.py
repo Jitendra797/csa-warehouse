@@ -57,8 +57,7 @@ def introspect_run_with_args(
             # print(inspect.isfunction(obj))
             signature = inspect.signature(obj)
             parameters = [
-                _extract_type_string(param_signature.annotation)
-                for _, param_signature in signature.parameters.items()
+                _extract_type_string(param_signature.annotation) for _, param_signature in signature.parameters.items()
             ]
 
             # Converting the object <class return_type> into string

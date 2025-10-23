@@ -1,4 +1,4 @@
-import os 
+import os
 from minio import Minio
 from io import BytesIO
 from datetime import datetime, timedelta
@@ -12,9 +12,9 @@ class MinioStorageService(BaseStorage):
     def __init__(self):
         self.client = Minio(
             settings.MINIO_ENDPOINT,
-            access_key = settings.MINIO_ACCESS_KEY.get_secret_value(),
-            secret_key = settings.MINIO_SECRET_KEY.get_secret_value(),
-            secure = False
+            access_key=settings.MINIO_ACCESS_KEY.get_secret_value(),
+            secret_key=settings.MINIO_SECRET_KEY.get_secret_value(),
+            secure=False,
         )
         self.bucket = settings.MINIO_BUCKET_NAME
         if not self.client.bucket_exists(self.bucket):
@@ -35,13 +35,11 @@ class MinioStorageService(BaseStorage):
             ]
         }}
         """
-        
+
         self.client.set_bucket_policy(self.bucket, policy)
 
     def upload_file(self, file_bytes: bytes, file_name: str) -> str:
-        self.client.put_object(
-            self.bucket, file_name, BytesIO(file_bytes), length=len(file_bytes)
-        )
+        self.client.put_object(self.bucket, file_name, BytesIO(file_bytes), length=len(file_bytes))
         return f"{self.bucket}/{file_name}"
 
     def generate_presigned_url(self, filename: str, user_id: str) -> str:
@@ -49,31 +47,28 @@ class MinioStorageService(BaseStorage):
         name, extension = os.path.splitext(filename)
         new_filename = f"{name}_{timestamp}{extension}"
         object_name = f"{user_id}/{new_filename}"
-        
+
         url = self.client.presigned_put_object(
-            self.bucket, 
-            object_name, 
-            expires=timedelta(seconds=self.minio_presigned_url_expiry)
+            self.bucket, object_name, expires=timedelta(seconds=self.minio_presigned_url_expiry)
         )
 
-        return url, object_name 
-        
+        return url, object_name
+
     def generate_download_url(self, filename: str):
         """Generate a presigned URL for downloading a file"""
         url = self.client.presigned_get_object(
-            self.bucket,
-            filename,
-            expires=timedelta(seconds=self.minio_presigned_url_expiry)
+            self.bucket, filename, expires=timedelta(seconds=self.minio_presigned_url_expiry)
         )
         return url
 
     def get_object(self, object_name: str, bucket_name: str = None) -> BytesIO:
         """Get object from MinIO"""
         try:
-            bucket_name = bucket_name or self.bucket 
+            bucket_name = bucket_name or self.bucket
             return self.client.get_object(bucket_name, object_name)
         except Exception as e:
-            raise ValueError(f"Error getting object from MinIO: {str(e)}") 
+            raise ValueError(f"Error getting object from MinIO: {str(e)}")
+
 
 def get_minio_service():
     return MinioStorageService()
