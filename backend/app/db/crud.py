@@ -10,8 +10,13 @@ def user_to_dict(user: User):
 
     - Do not set `_id`; let MongoDB auto-generate ObjectId
     - Exclude `id` if None
+    - Convert role_id strings to ObjectIds for MongoDB storage
     """
     user_dict = user.model_dump(exclude_none=True)
+    # Convert role_id strings to ObjectIds for MongoDB storage
+    if 'role_id' in user_dict and user_dict['role_id']:
+        user_dict['role_id'] = [ObjectId(role_id)
+                                for role_id in user_dict['role_id']]
     return user_dict
 
 
@@ -30,6 +35,7 @@ def mongo_user_doc_to_dict(doc: dict):
     """Normalize a MongoDB user document to a response-friendly dict.
 
     - Ensures `_id` is a string
+    - Converts role_id ObjectIds to strings for API compatibility
     - Leaves other fields as-is
     """
     if doc is None:
@@ -37,6 +43,10 @@ def mongo_user_doc_to_dict(doc: dict):
     normalized = dict(doc)
     if "_id" in normalized:
         normalized["_id"] = str(normalized["_id"])
+    # Convert role_id ObjectIds to strings for API responses
+    if "role_id" in normalized and normalized["role_id"]:
+        normalized["role_id"] = [str(role_id)
+                                 for role_id in normalized["role_id"]]
     return normalized
 
 
@@ -57,7 +67,7 @@ def create_user_from_oauth(user_data: CreateUserFromOAuth):
         email=user_data.email,
         phone=user_data.phone,
         external_id=user_data.external_id,
-        role_id=default_role_id,
+        role_id=[str(default_role_id)] if default_role_id else [],
         created_at=now,
         updated_at=now,
     )
@@ -199,40 +209,68 @@ def initialize_default_endpoint_access():
     # Define default access patterns
     default_access = [
         # User role access
-        {"role": "user", "endpoint": "/dashboard", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/datastore/browse", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/datastore/manage", "viewer": True, "contributor": True, "admin": False},
-        {"role": "user", "endpoint": "/datastore/create", "viewer": True, "contributor": True, "admin": False},
-        {"role": "user", "endpoint": "/settings", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/about", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/support", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/pipeline", "viewer": True, "contributor": False, "admin": False},
-        {"role": "user", "endpoint": "/usermanagement", "viewer": False, "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/dashboard",
+            "viewer": True, "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/datastore/browse",
+            "viewer": True, "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/datastore/manage",
+            "viewer": True, "contributor": True, "admin": False},
+        {"role": "user", "endpoint": "/datastore/create",
+            "viewer": True, "contributor": True, "admin": False},
+        {"role": "user", "endpoint": "/settings", "viewer": True,
+            "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/about", "viewer": True,
+            "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/support", "viewer": True,
+            "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/pipeline", "viewer": True,
+            "contributor": False, "admin": False},
+        {"role": "user", "endpoint": "/usermanagement",
+            "viewer": False, "contributor": False, "admin": False},
         # Admin role access (can access everything except superadmin features)
-        {"role": "admin", "endpoint": "/dashboard", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/datastore/browse", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/datastore/manage", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/datastore/create", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/settings", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/about", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/support", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/pipeline", "viewer": True, "contributor": True, "admin": True},
-        {"role": "admin", "endpoint": "/usermanagement", "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/dashboard",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/datastore/browse",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/datastore/manage",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/datastore/create",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/settings",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/about", "viewer": True,
+            "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/support",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/pipeline",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "admin", "endpoint": "/usermanagement",
+            "viewer": True, "contributor": True, "admin": True},
         # Superadmin role access (can access everything)
-        {"role": "superadmin", "endpoint": "/dashboard", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/datastore/browse", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/datastore/manage", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/datastore/create", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/settings", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/about", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/support", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/pipeline", "viewer": True, "contributor": True, "admin": True},
-        {"role": "superadmin", "endpoint": "/usermanagement", "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/dashboard",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/datastore/browse",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/datastore/manage",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/datastore/create",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/settings",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/about",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/support",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/pipeline",
+            "viewer": True, "contributor": True, "admin": True},
+        {"role": "superadmin", "endpoint": "/usermanagement",
+            "viewer": True, "contributor": True, "admin": True},
     ]
 
     # Insert default access controls if they don't exist
     for access_data in default_access:
-        existing = get_endpoint_access_by_role_and_endpoint(access_data["role"], access_data["endpoint"])
+        existing = get_endpoint_access_by_role_and_endpoint(
+            access_data["role"], access_data["endpoint"])
         if not existing:
             endpoint_access = EndpointAccess(**access_data)
             create_endpoint_access(endpoint_access)

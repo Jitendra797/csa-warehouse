@@ -26,8 +26,9 @@ files = db["files"]
 # Collection for pipelines
 pipelines_collection = db["pipelines"]
 
-# Pipeline statu
-pipeline_status = db["pipeline_status"]
+# Collection for pipeline execution history
+pipelines_history_collection = db["pipelines_history"]
+
 
 # Collection for endpoint access control
 endpoint_access_collection = db["endpoint_access"]

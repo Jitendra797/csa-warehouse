@@ -6,7 +6,7 @@ from typing import Dict, Any, Tuple
 from app.utils.erp import pull_dataset
 from app.services.storage.mongodb_service import store_to_mongodb
 from app.config.logging import LoggerMixin
-from app.db.database import pipeline_status, datasets_collection, pipelines_collection
+from app.db.database import datasets_collection, pipelines_collection, pipelines_history_collection
 
 # In-memory store for task metadata
 tasks: Dict[str, Dict[str, Any]] = {}
@@ -14,7 +14,7 @@ tasks: Dict[str, Dict[str, Any]] = {}
 
 class TaskRunner(LoggerMixin):
     def run_pipeline_task(
-        self, dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str, exec_id: str
+        self, dataset_id: str, dataset_name: str, user_id: str, exec_id: str, pipeline_id: str = None
     ) -> None:
         self.logger.info(
             f"[Thread: {threading.current_thread().name}] Starting task {exec_id} for dataset {dataset_id}"
@@ -26,53 +26,39 @@ class TaskRunner(LoggerMixin):
         try:
             # Pull fresh dataset from ERP
             dataset = pull_dataset(dataset_name)
-            self.logger.info(f"[{exec_id}] Pulled dataset with {len(dataset)} records.")
+            self.logger.info(
+                f"[{exec_id}] Pulled dataset with {len(dataset)} records.")
 
             dataset_json = dataset.to_dict(orient="records")
 
             # Store/update dataset in MongoDB
-            result = store_to_mongodb(dataset_id, dataset_name, user_id, username, user_email, dataset_json)
-
-            # Get the actual dataset document ID from the result
-            dataset_doc_id = result.get("id")
+            result = store_to_mongodb(
+                dataset_id, dataset_name, user_id, "", "", dataset_json, pipeline_id)
 
             if result.get("updated"):
-                self.logger.info(f"[{exec_id}] Updated existing dataset {dataset_id} with {len(dataset_json)} records.")
+                self.logger.info(
+                    f"[{exec_id}] Updated existing dataset {dataset_id} with {len(dataset_json)} records.")
             elif result.get("inserted"):
-                self.logger.info(f"[{exec_id}] Created new dataset {dataset_id} with {len(dataset_json)} records.")
+                self.logger.info(
+                    f"[{exec_id}] Created new dataset {dataset_id} with {len(dataset_json)} records.")
 
             # Update in-memory status
             tasks[exec_id]["status"] = "completed"
 
-            # Always create/update pipeline status using the dataset document ID
-            pipeline_status.update_one(
-                {"_id": dataset_doc_id},
-                {
-                    "$set": {
-                        "_id": dataset_doc_id,
-                        "dataset_id": dataset_id,
-                        "name": dataset_name,
-                        "user_id": user_id,
-                        "user_name": username,
-                        "user_email": user_email,
-                        "exec_id": exec_id,
-                        "status": "completed",
-                    }
-                },
-                upsert=True,
-            )
-
             # Add "completed" entry to pipeline history
-            add_pipeline_history_entry(dataset_name, exec_id, "completed", user_id)
+            add_pipeline_history_entry(
+                dataset_name, exec_id, "completed", user_id)
 
         except Exception as e:
-            self.logger.error(f"[{exec_id}] Task failed with error: {e}", exc_info=True)
+            self.logger.error(
+                f"[{exec_id}] Task failed with error: {e}", exc_info=True)
 
             # Update in-memory status
             tasks[exec_id]["status"] = "error"
 
-            # Add "failed" entry to pipeline history
-            add_pipeline_history_entry(dataset_name, exec_id, "failed", user_id)
+            # Add "error" entry to pipeline history
+            add_pipeline_history_entry(
+                dataset_name, exec_id, "error", user_id)
 
 
 def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, user_id: str):
@@ -80,38 +66,69 @@ def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, us
         current_time = datetime.now(timezone.utc).isoformat()
 
         # Check if pipeline exists
-        existing_pipeline = pipelines_collection.find_one({"pipeline_name": pipeline_name})
+        existing_pipeline = pipelines_collection.find_one(
+            {"pipeline_name": pipeline_name})
 
         if existing_pipeline:
-            # Check if exec_id already exists in history
-            pipelines_collection.update_one(
-                {"pipeline_name": pipeline_name, "history.exec_id": exec_id},
-                {
-                    "$set": {
-                        "history.$.status": status,
-                        "history.$.executed_at": current_time,
-                        "history.$.user": user_id,
-                    }
-                },
-            )
+            pipeline_id = existing_pipeline["_id"]
 
-            # If no existing exec_id found, push new history entry
-            pipelines_collection.update_one(
-                {"pipeline_name": pipeline_name, "history.exec_id": {"$ne": exec_id}},
-                {
-                    "$push": {
-                        "history": {"exec_id": exec_id, "status": status, "user": user_id, "executed_at": current_time}
+            # Check if history entry already exists for this execution
+            existing_history = pipelines_history_collection.find_one({
+                "execution_id": exec_id
+            })
+
+            if existing_history:
+                # Update existing history entry
+                pipelines_history_collection.update_one(
+                    {"_id": existing_history["_id"]},
+                    {
+                        "$set": {
+                            "status": status,
+                            "updated_at": current_time
+                        }
                     }
-                },
-            )
-        else:
-            # Create new pipeline with first history entry
-            pipelines_collection.insert_one(
-                {
-                    "_id": uuid.uuid4().hex,
-                    "pipeline_name": pipeline_name,
-                    "history": [{"exec_id": exec_id, "status": status, "user": user_id, "executed_at": current_time}],
+                )
+            else:
+                # Create new history document
+                history_doc = {
+                    "execution_id": exec_id,
+                    "status": status,
+                    "created_at": current_time,
+                    "updated_at": current_time
                 }
+                history_result = pipelines_history_collection.insert_one(
+                    history_doc)
+
+                # Add history document ID to pipeline's history array
+                pipelines_collection.update_one(
+                    {"_id": pipeline_id},
+                    {"$push": {"history": history_result.inserted_id}}
+                )
+        else:
+            # Create new pipeline first
+            pipeline_doc = {
+                "_id": str(uuid.uuid4()),
+                "pipeline_name": pipeline_name,
+                "is_enabled": True,
+                "history": []
+            }
+            pipeline_result = pipelines_collection.insert_one(pipeline_doc)
+            pipeline_id = pipeline_result.inserted_id
+
+            # Create history document
+            history_doc = {
+                "execution_id": exec_id,
+                "status": status,
+                "created_at": current_time,
+                "updated_at": current_time
+            }
+            history_result = pipelines_history_collection.insert_one(
+                history_doc)
+
+            # Add history document ID to pipeline's history array
+            pipelines_collection.update_one(
+                {"_id": pipeline_id},
+                {"$push": {"history": history_result.inserted_id}}
             )
 
     except Exception as e:
@@ -121,66 +138,30 @@ def add_pipeline_history_entry(pipeline_name: str, exec_id: str, status: str, us
 task_runner = TaskRunner()
 
 
-def submit_task(dataset_id: str, dataset_name: str, user_id: str, username: str, user_email: str) -> Tuple[dict, str]:
+def submit_task(dataset_id: str, dataset_name: str, user_id: str, pipeline_id: str = None) -> Tuple[dict, str]:
     exec_id = str(uuid.uuid4())
     current_time = datetime.now(timezone.utc).isoformat()
 
     # Check if dataset already exists
     existing_dataset = datasets_collection.find_one({"dataset_id": dataset_id})
 
-    if existing_dataset:
-        # Set pipeline status to running for existing dataset
-        pipeline_status.update_one(
-            {"_id": existing_dataset["_id"]},
-            {
-                "$set": {
-                    "_id": existing_dataset["_id"],
-                    "dataset_id": dataset_id,
-                    "name": dataset_name,
-                    "user_id": user_id,
-                    "user_name": username,
-                    "user_email": user_email,
-                    "exec_id": exec_id,
-                    "status": "running",
-                }
-            },
-            upsert=True,
-        )
+    # Note: Pipeline status is now tracked in pipelines_history collection
 
     tasks[exec_id] = {
         "status": "running",
         "executed_at": current_time,
         "user_id": user_id,
-        "user_name": username,
-        "user_email": user_email,
     }
 
     # Run task in background thread
     thread = threading.Thread(
         target=task_runner.run_pipeline_task,
-        args=(dataset_id, dataset_name, user_id, username, user_email, exec_id),
+        args=(dataset_id, dataset_name, user_id, exec_id, pipeline_id),
         name=f"TaskThread-{exec_id[:8]}",
     )
     thread.start()
 
     return tasks[exec_id], exec_id
-
-
-def get_task_status(dataset_id: str, user_id: str) -> Dict[str, Any]:
-    dataset_doc = datasets_collection.find_one({"dataset_id": dataset_id})
-
-    if not dataset_doc:
-        return {"status": "not found", "message": "No dataset found with this ID."}
-
-    # Check if the requesting user matches the dataset owner
-    if dataset_doc.get("user_id") != user_id:
-        return {"status": "not authorized", "message": "You don't have access to this dataset."}
-
-    result = pipeline_status.find_one({"_id": dataset_doc["_id"]})
-    if not result:
-        return {"status": "not found", "message": "No pipeline status found for this dataset."}
-
-    return {"exec_id": result.get("exec_id"), "status": result.get("status", "unknown")}
 
 
 def get_user_datasets(user_id: str) -> Dict[str, Any]:
