@@ -33,9 +33,11 @@ app.add_middleware(TokenAuthMiddleware)
 
 # Include routers; protect selected routers with Bearer auth dependency
 app.include_router(run_router, dependencies=[Depends(require_bearer_token)])
-app.include_router(datasets_router, dependencies=[Depends(require_bearer_token)])
+app.include_router(datasets_router, dependencies=[
+                   Depends(require_bearer_token)])
 app.include_router(manage_router, dependencies=[Depends(require_bearer_token)])
-app.include_router(dataset_info_router, dependencies=[Depends(require_bearer_token)])
-# user_router contains /users/oauth/sync which must be unauthenticated during sign-in
+app.include_router(dataset_info_router, dependencies=[
+                   Depends(require_bearer_token)])
 app.include_router(user_router)
-app.include_router(role_check_router, dependencies=[Depends(require_bearer_token)])
+app.include_router(role_check_router, dependencies=[
+                   Depends(require_bearer_token)])

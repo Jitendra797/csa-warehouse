@@ -12,7 +12,7 @@ poetry run uvicorn app.main:app # Run the backend
 
 ### POST `/run-dataset`
 
-Triggers a pipeline execution for a given dataset ID. Stores execution metadata in the `pipeline_status` collection.
+Triggers a pipeline execution for a given dataset ID. Stores execution metadata in the `pipelines_history` collection.
 
 ### Sample Request
 
