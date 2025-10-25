@@ -71,7 +71,7 @@ class BrowseResponse(BaseModel):
 
 
 class ManageResponse(BaseModel):
-    data: List[DatasetInfo]
+    data: List[DatasetCardInfo]
 
 
 # --------------------------------- /datasets/create ---------------------------------

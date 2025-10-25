@@ -6,7 +6,6 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useState, useEffect } from "react";
 import { getDatasets } from "@/lib/hey-api/client/sdk.gen";
 import { useSession } from "next-auth/react";
-import { BrowseResponse } from "@/lib/hey-api/client/types.gen";
 
 export interface DatasetCardInfo {
   dataset_id: string;
@@ -41,7 +40,7 @@ export default function Browse() {
           },
         });
         if (response.data) {
-          const responseData: BrowseResponse = response.data;
+          const responseData = response.data;
           const datasetsInfo: DatasetCardInfo[] = responseData.data;
           setDatasets(datasetsInfo);
         } else {

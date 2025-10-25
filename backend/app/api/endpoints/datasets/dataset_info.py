@@ -28,22 +28,16 @@ async def get_dataset_info(id: str, current_user: dict = Depends(get_current_use
             status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@dataset_info_router.get("/user/datasets", response_model=ManageResponse)
-async def get_user_datasets(fastapi_request: Request, authorization: str = Header(None)) -> ManageResponse:
+@dataset_info_router.get("/user/datasets", response_model=ManageResponse, operation_id="get_user_datasets")
+async def get_user_datasets(current_user: dict = Depends(get_current_user)) -> ManageResponse:
     try:
-        # Prefer external_id extracted by middleware; fallback to parsing Authorization header
-        external_id = getattr(fastapi_request.state, "external_id", None)
-        if not external_id and authorization:
-            # Lazy import to avoid circular import at module level
-            from app.api.endpoints.users.role_check import extract_user_id_from_token
-
-            external_id = extract_user_id_from_token(authorization)
-
-        if not external_id:
+        # Get the user's MongoDB _id from the current_user
+        user_id = current_user.get("_id")
+        if not user_id:
             raise HTTPException(
-                status_code=401, detail="Missing external id from token")
+                status_code=401, detail="Missing user id from token")
 
-        datasets = get_data_from_collection(user_id=external_id)
+        datasets = get_dataset_card_info(user_id=str(user_id))
         return ManageResponse(data=datasets)
 
     except HTTPException:

@@ -16,8 +16,8 @@ export interface DatasetCardProps {
   dataset_name: string;
   description: string;
   pulled_from_pipeline: boolean;
-  usernames: string[];
-  useremails: string[];
+  user_names: string[];
+  user_emails: string[];
   updated_at: string;
 }
 
@@ -25,17 +25,17 @@ export function DatasetCard({
   dataset_id,
   dataset_name,
   description,
-  useremails,
-  usernames,
+  user_emails,
+  user_names,
   updated_at,
   pulled_from_pipeline,
 }: DatasetCardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const usernameslength = usernames.length;
-  const useremailslength = useremails.length;
-  const username = usernames[usernameslength - 1];
-  const useremail = useremails[useremailslength - 1];
+  const usernameslength = user_names.length;
+  const useremailslength = user_emails.length;
+  const username = user_names[usernameslength - 1];
+  const useremail = user_emails[useremailslength - 1];
 
   const handleView = async () => {
     setIsLoading(true);
@@ -74,16 +74,16 @@ export function DatasetCard({
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground mb-2">
-            Pipeline Run By
+            {pulled_from_pipeline ? "Pipeline Run By" : "Dataset Uploaded By"}
           </p>
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center">
               <User className="w-3 h-3 mr-1.5" />
-              {username}
+              {username || "Unknown User"}
             </p>
             <p className="text-xs text-muted-foreground flex items-center">
               <Mail className="w-3 h-3 mr-1.5" />
-              {useremail}
+              {useremail || "No email"}
             </p>
           </div>
         </div>
