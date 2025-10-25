@@ -24,6 +24,9 @@ export default function Manage() {
             query: {
               user_id: session?.user?.name || "",
             },
+            headers: {
+              Authorization: `Bearer ${session?.user?.apiToken}`,
+            },
           }
         );
         if (response.data) {

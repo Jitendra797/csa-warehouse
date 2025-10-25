@@ -168,6 +168,9 @@ export default function Create() {
       const response =
         await createDatasetDatasetsCreatePost({
           body: datasetPayload,
+          headers: {
+            Authorization: `Bearer ${session?.user?.apiToken}`,
+          },
         });
       const responseData = response.data as CreateDatasetInformationResponse;
       if(!responseData.status){
@@ -373,7 +376,7 @@ export default function Create() {
                     }}
                     dropzoneOptions={dropZoneConfig}
                     className="relative bg-background rounded-lg p-2"
-                    authToken={""}
+                    authToken={session?.user?.apiToken || ""}
                   >
                     <FileInput
                       id="file-input"
@@ -405,7 +408,7 @@ export default function Create() {
                             variant="outline"
                             size="sm"
                             downloadName={`File-${index + 1}`}
-                            accessToken={""}
+                            accessToken={session?.user?.apiToken || ""}
                           >
                             View File
                           </FileDownloadButton>

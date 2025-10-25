@@ -8,9 +8,21 @@ import { Loader2, AlertCircle, Badge } from "lucide-react";
 import { useParams } from "next/navigation";
 import { getDatasetInfoDatasetGet } from "@/lib/hey-api/client/sdk.gen";
 import {
-  DatasetDetail,
+  DatasetDetail as ApiDatasetDetail,
   DatasetInfoResponse,
 } from "@/lib/hey-api/client/types.gen";
+import { useSession } from "next-auth/react";
+
+export interface DatasetDetail {
+  dataset_id: string;
+  dataset_name: string;
+  description: string;
+  pulled_from_pipeline: boolean;
+  user_name: string[];
+  user_email: string[];
+  updated_at: string;
+}
+
 
 export default function DatasetDetails() {
   const params = useParams();
@@ -19,6 +31,7 @@ export default function DatasetDetails() {
   const [datasetData, setDatasetData] = useState<DatasetDetail| null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   const fetchDatasetRows = useCallback(async () => {
     try {
@@ -29,15 +42,18 @@ export default function DatasetDetails() {
         query: {
           id: dataset_id
         },
+        headers: {
+          Authorization: `Bearer ${session?.user?.apiToken}`,
+        },
       });
 
       if (response.data) {
         const responseData: DatasetInfoResponse = response.data;
-        const datasetDetail: DatasetDetail = responseData.data;
+        const datasetDetail: ApiDatasetDetail = responseData.data;
         const userslength = datasetDetail.user_name.length
         const username = datasetDetail.user_name[userslength - 1]
         setUsername(username);
-        setDatasetData(datasetDetail);
+        setDatasetData(datasetDetail as DatasetDetail);
       } else {
         throw new Error("Failed to fetch dataset rows");
       }

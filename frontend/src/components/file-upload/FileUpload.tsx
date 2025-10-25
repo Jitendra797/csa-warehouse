@@ -158,6 +158,9 @@ export const FileUploader = forwardRef<
             filename: uniqueFileName,
             user_id: ""
           },
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
         const presignedUrlResponse= response.data as PresignedUrlResponse;
         console.log("Presigned URL response:", presignedUrlResponse);
@@ -190,6 +193,9 @@ export const FileUploader = forwardRef<
         // Extract CSV data after successful upload
         const extractresponse = await extractCsvDatasetsExtractPost({
           body: extractCsvDataRequest,
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
         const extractResponseData = extractresponse.data as ExtractAndStoreResponse;
 

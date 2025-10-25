@@ -16,9 +16,9 @@ export interface DatasetCardProps {
   dataset_name: string;
   description: string;
   pulled_from_pipeline: boolean;
-  usernames: string[];
-  useremails: string[];
   updated_at: string;
+  user_names: string[];
+  user_emails: string[];
 }
 
 export function DatasetCard({
@@ -26,16 +26,16 @@ export function DatasetCard({
   dataset_name,
   description,
   pulled_from_pipeline,
-  usernames,
-  useremails,
   updated_at,
+  user_names,
+  user_emails,
 }: DatasetCardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const usernameslength = usernames.length;
-  const useremailslength = useremails.length;
-  const username = usernames[usernameslength - 1];
-  const useremail = useremails[useremailslength - 1];
+  const user_nameslength = user_names.length;
+  const user_emailslength = user_emails.length;
+  const username = user_names[user_nameslength - 1];
+  const useremail = user_emails[user_emailslength - 1];
 
   const handleOpen = async () => {
     setIsLoading(true);
@@ -59,7 +59,7 @@ export function DatasetCard({
         <p className="text-sm font-semibold text-foreground py-2">
           {pulled_from_pipeline ? (
             <>
-              <span className="font-semibold">Pipeline Run on</span>{" "}
+              <span className="font-semibold">Pipeline Lastly Run on</span>{" "}
               {formatDate(updated_at)}
             </>
           ) : (
@@ -73,7 +73,7 @@ export function DatasetCard({
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {pulled_from_pipeline ? "Pipeline Run By" : "Dataset Created By"}
+            {pulled_from_pipeline ? "Pipeline Lastly Run By" : "Dataset Created By"}
           </p>
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center">

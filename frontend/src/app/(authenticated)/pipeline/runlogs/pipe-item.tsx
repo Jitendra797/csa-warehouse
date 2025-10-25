@@ -1,51 +1,59 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useSession } from "next-auth/react";
 import { usePipelineStatusCheck } from "@/components/hooks/check-pipeline-status";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import {
-  runPipelinePipelinesRunPost,
-  getPipelineStatusPipelineStatusGet,
+  runPipeline,
+  getPipelineStatus,
 } from "@/lib/hey-api/client/sdk.gen";
-import {
-  RunPipelineRequest,
-  RunPipelineResponse,
-  PipelineItem,
-  PipelineStatusResponse,
-} from "@/lib/hey-api/client/types.gen";
+import { useSession } from "next-auth/react";
 
-export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
+export interface PipelineItem {
+  _id: string;
+  pipeline_name: string;
+  is_enabled: boolean;
+  pipeline_status: PipelineStatus;
+}
+
+export type PipelineStatus = "running" | "completed" | "error" | "null";
+
+export interface RunPipelineRequest {
+  pipeline_id: string;
+  pipeline_name: string;
+}
+
+export interface RunPipelineResponse {
+  status: string;
+  execution_id: string;
+  executed_at: string;
+}
+
+export function Pipeline({ _id, pipeline_name, is_enabled, pipeline_status }: PipelineItem) {
+  console.log(is_enabled);
+  const [currentStatus, setCurrentStatus] = useState<PipelineStatus>(
+    pipeline_status,
+  );
+  const [currentExecId, setCurrentExecId] = useState<string | null>(null);
   const { data: session } = useSession();
-  const username = session?.user?.name || "";
-  const useremail = session?.user?.email || "";
-  const historylength = history.length;
-  const initialStatus =
-    historylength > 0 ? history[historylength - 1]?.status : null;
-  const initialExecId =
-    historylength > 0 ? history[historylength - 1]?.exec_id : null;
-  const [currentStatus, setCurrentStatus] = useState<string | null>(
-    initialStatus,
-  );
-  const [currentExecId, setCurrentExecId] = useState<string | null>(
-    initialExecId,
-  );
 
   const runPipelineRequest: RunPipelineRequest = {
     pipeline_id: _id,
     pipeline_name: pipeline_name,
-    user_name: username,
-    user_email: useremail,
   };
 
-  const runPipeline = async () => {
-    const response = await runPipelinePipelinesRunPost({
+  const runPipelineFunction = async () => {
+    const response = await runPipeline({
       body: runPipelineRequest,
+      headers: {
+        'Authorization': `Bearer ${session?.user?.apiToken}`,
+        'Content-Type': 'application/json'
+      }
     });
     if (response.data) {
       const responseData: RunPipelineResponse = response.data;
       setCurrentExecId(responseData.execution_id);
-      setCurrentStatus(responseData.status);
+      setCurrentStatus(responseData.status as PipelineStatus);
     }
   };
 
@@ -53,17 +61,21 @@ export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
     if (!currentExecId) return;
 
     try {
-      const response = await getPipelineStatusPipelineStatusGet({
+      const response = await getPipelineStatus({
         query: {
-          dataset_id: _id,
-          exec_id: currentExecId,
+          pipeline_id: _id,
+          execution_id: currentExecId,
         },
+        headers: {
+          'Authorization': `Bearer ${session?.user?.apiToken}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.data) {
-        const responseData: PipelineStatusResponse = response.data;
-        const status = responseData.status;
-        setCurrentStatus(status);
+        const responseData: PipelineStatus = response.data;
+
+        setCurrentStatus(responseData);
       }
     } catch (error) {
       console.error("Error checking pipeline status:", error);
@@ -71,7 +83,7 @@ export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
   };
 
   usePipelineStatusCheck(
-    currentStatus as "running" | "completed" | "error" | null,
+    currentStatus as PipelineStatus,
     checkPipelineStatus,
     _id,
     currentExecId,
@@ -87,7 +99,7 @@ export function Pipeline({ _id, pipeline_name, history }: PipelineItem) {
           <Button
             variant="outline"
             size="sm"
-            onClick={runPipeline}
+            onClick={runPipelineFunction}
             disabled={currentStatus === "running"}
           >
             Run Pipeline
