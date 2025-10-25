@@ -13,14 +13,12 @@ async def get_datasets(current_user: dict = Depends(get_current_user)) -> Browse
     return BrowseResponse(data=datasets)
 
 
-@dataset_info_router.get("/dataset", response_model=DatasetInfoResponse)
-async def get_dataset_info(id: str) -> DatasetInfoResponse:
+@dataset_info_router.get("/dataset", response_model=DatasetInfoResponse, operation_id="get_dataset_info")
+async def get_dataset_info(id: str, current_user: dict = Depends(get_current_user)) -> DatasetInfoResponse:
     try:
         dataset = get_data_from_collection(dataset_id=id)
-
         if not dataset or dataset == []:
             raise HTTPException(status_code=404, detail="Dataset not found")
-        # print(dataset)
         return DatasetInfoResponse(status="success", data=dataset)
 
     except HTTPException:

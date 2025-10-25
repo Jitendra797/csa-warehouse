@@ -22,8 +22,12 @@ def get_user_info(user_id: str) -> Dict[str, str]:
     try:
         user = users_collection.find_one({"_id": ObjectId(user_id)})
         if user:
+            first_name = user.get("first_name", "")
+            last_name = user.get("last_name", "")
+            full_name = f"{first_name} {last_name}".strip(
+            ) if first_name or last_name else ""
             return {
-                "user_name": user.get("name", ""),
+                "user_name": full_name,
                 "user_email": user.get("email", "")
             }
         return {"user_name": "", "user_email": ""}
@@ -218,7 +222,7 @@ def get_data_from_collection(
     try:
         if dataset_id:
             info_doc = dataset_information_collection.find_one(
-                {"dataset_id": dataset_id})
+                {"dataset_id": ObjectId(dataset_id)})
             if not info_doc:
                 return {}
 
@@ -237,16 +241,28 @@ def get_data_from_collection(
                         data_rows.append({col: row.get(col)
                                          for col in selected_columns})
 
+            # Get user information from user_ids
+            user_ids = info_doc.get("user_id", [])
+            user_names = []
+            user_emails = []
+
+            for user_id in user_ids:
+                user_info = get_user_info(user_id)
+                if user_info.get("user_name"):
+                    user_names.append(user_info["user_name"])
+                if user_info.get("user_email"):
+                    user_emails.append(user_info["user_email"])
+
             return {
                 "dataset_name": info_doc.get("dataset_name", ""),
-                "dataset_id": info_doc.get("dataset_id"),
-                "file_id": info_doc.get("file_id", ""),
+                "dataset_id": str(info_doc.get("dataset_id")),
+                "file_id": str(info_doc.get("file_id", "")),
                 "description": info_doc.get("description", ""),
                 "tags": info_doc.get("tags", []),
                 "dataset_type": info_doc.get("dataset_type", ""),
                 "permissions": info_doc.get("permissions", ""),
                 "is_spatial": info_doc.get("is_spatial", False),
-                "is_temporial": info_doc.get("is_temporial", False),
+                "is_temporal": info_doc.get("is_temporial", False),
                 "temporal_granularities": info_doc.get("temporal_granularities", []),
                 "spatial_granularities": info_doc.get("spatial_granularities", []),
                 "location_columns": info_doc.get("location_columns", []),
@@ -254,9 +270,8 @@ def get_data_from_collection(
                 "pulled_from_pipeline": info_doc.get("pulled_from_pipeline", False),
                 "created_at": info_doc.get("created_at"),
                 "updated_at": info_doc.get("updated_at"),
-                "user_id": info_doc.get("user_id") or [],
-                "user_name": info_doc.get("user_name") or [],
-                "user_email": info_doc.get("user_email") or [],
+                "user_names": user_names,
+                "user_emails": user_emails,
                 "rows": data_rows,
             }
 
@@ -283,24 +298,38 @@ def get_data_from_collection(
                             data_rows.append({col: row.get(col)
                                              for col in selected_columns})
 
+                # Get user information from user_ids
+                user_ids = doc.get("user_id", [])
+                user_names = []
+                user_emails = []
+
+                for user_id in user_ids:
+                    user_info = get_user_info(user_id)
+                    if user_info.get("user_name"):
+                        user_names.append(user_info["user_name"])
+                    if user_info.get("user_email"):
+                        user_emails.append(user_info["user_email"])
+
                 results.append(
                     {
                         "dataset_name": doc.get("dataset_name", ""),
-                        "dataset_id": doc.get("dataset_id"),
-                        "file_id": doc.get("file_id", ""),
+                        "dataset_id": str(doc.get("dataset_id")),
+                        "file_id": str(doc.get("file_id", "")),
                         "description": doc.get("description", ""),
                         "tags": doc.get("tags", []),
                         "dataset_type": doc.get("dataset_type", ""),
                         "permissions": doc.get("permissions", ""),
                         "is_spatial": doc.get("is_spatial", False),
-                        "is_temporial": doc.get("is_temporial", False),
+                        "is_temporal": doc.get("is_temporial", False),
+                        "temporal_granularities": doc.get("temporal_granularities", []),
+                        "spatial_granularities": doc.get("spatial_granularities", []),
+                        "location_columns": doc.get("location_columns", []),
+                        "time_columns": doc.get("time_columns", []),
                         "pulled_from_pipeline": doc.get("pulled_from_pipeline", False),
                         "created_at": doc.get("created_at"),
                         "updated_at": doc.get("updated_at"),
-                        "user_id": doc.get("user_id") or [],
-                        "user_name": doc.get("user_name") or [],
-                        "user_email": doc.get("user_email") or [],
-                        # "rows": data_rows
+                        "user_names": user_names,
+                        "user_emails": user_emails,
                     }
                 )
             print(results)

@@ -52,8 +52,8 @@ class DatasetInfo(BaseModel):
                              description="Permissions associated with the dataset")
     is_spatial: bool = Field(...,
                              description="Whether the dataset has spatial data")
-    is_temporial: bool = Field(...,
-                               description="Whether the dataset has temporal data")
+    is_temporal: bool = Field(...,
+                              description="Whether the dataset has temporal data")
     pulled_from_pipeline: bool = Field(
         ..., description="Whether dataset is pulled from a pipeline")
     created_at: datetime = Field(...,
@@ -137,8 +137,8 @@ class DatasetDetail(BaseModel):
                              description="Permissions associated with the dataset")
     is_spatial: bool = Field(...,
                              description="Whether the dataset contains spatial data")
-    is_temporial: bool = Field(...,
-                               description="Whether the dataset contains temporal data")
+    is_temporal: bool = Field(...,
+                              description="Whether the dataset contains temporal data")
     temporal_granularities: Optional[List[TemporalGranularity]
                                      ] = Field(..., description="Temporal Granularities")
     spatial_granularities: Optional[List[SpatialGranularity]
@@ -152,9 +152,11 @@ class DatasetDetail(BaseModel):
                                  description="Timestamp when the dataset was created")
     updated_at: datetime = Field(...,
                                  description="Timestamp when the dataset was last updated")
-    user_id: List[str] = Field(...,
-                               description="List of user IDs associated with the dataset")
-    rows: List[Dict[str, Any]] = Field(
+    user_names: List[str] = Field(...,
+                                  description="List of user names associated with the dataset")
+    user_emails: List[str] = Field(...,
+                                   description="List of user emails associated with the dataset")
+    rows: List[Dict[str, Union[str, int, float, bool, None]]] = Field(
         ..., description="Preview of dataset records (top 10 rows & columns)")
 
 

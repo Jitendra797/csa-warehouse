@@ -1,80 +1,84 @@
 "use client";
-
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { DataTable } from "@/components/TableView/data-table";
 import { useEffect, useState, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, AlertCircle, Badge } from "lucide-react";
 import { useParams } from "next/navigation";
-import { getDatasetInfoDatasetGet } from "@/lib/hey-api/client/sdk.gen";
-import {
-  DatasetDetail as ApiDatasetDetail,
-  DatasetInfoResponse,
-} from "@/lib/hey-api/client/types.gen";
+import { getDatasetInfo } from "@/lib/hey-api/client/sdk.gen";
 import { useSession } from "next-auth/react";
+
+export type TemporalGranularity = "year" | "month" | "day";
+export type SpatialGranularity = "country" | "state" | "district" | "village" | "lat_long";
 
 export interface DatasetDetail {
   dataset_id: string;
   dataset_name: string;
+  file_id: string;
   description: string;
+  tags: string[];
+  dataset_type: string;
+  permissions: string;
+  is_spatial: boolean;
+  is_temporal: boolean;
+  temporal_granularities: TemporalGranularity[];
+  spatial_granularities: SpatialGranularity[];
+  location_columns: string[];
+  time_columns: string[];
   pulled_from_pipeline: boolean;
-  user_name: string[];
-  user_email: string[];
+  created_at: string;
   updated_at: string;
+  user_names: string[];
+  user_emails: string[];
+  rows: Record<string, string | number | boolean | null>[];
 }
-
 
 export default function DatasetDetails() {
   const params = useParams();
   const dataset_id = params.dataset_id as string;
-  const [username, setUsername] = useState<string>("");
   const [datasetData, setDatasetData] = useState<DatasetDetail| null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
 
-  const fetchDatasetRows = useCallback(async () => {
+  const fetchDatasetInfo = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await getDatasetInfoDatasetGet({
+      const response = await getDatasetInfo({
         query: {
           id: dataset_id
         },
         headers: {
-          Authorization: `Bearer ${session?.user?.apiToken}`,
+          'Authorization': `Bearer ${session?.user.apiToken}`,
+          'Content-Type': 'application/json'
         },
       });
 
       if (response.data) {
-        const responseData: DatasetInfoResponse = response.data;
-        const datasetDetail: ApiDatasetDetail = responseData.data;
-        const userslength = datasetDetail.user_name.length
-        const username = datasetDetail.user_name[userslength - 1]
-        setUsername(username);
-        setDatasetData(datasetDetail as DatasetDetail);
-      } else {
-        throw new Error("Failed to fetch dataset rows");
+        const responseData = response.data;
+        const datasetDetail = responseData.data as DatasetDetail;
+        setDatasetData(datasetDetail);
       }
     } catch (err) {
-      console.error("Error fetching dataset rows:", err);
+      console.error("Error fetching dataset:", err);
       setError("Failed to load dataset. Please try again later.");
     } finally {
       setLoading(false);
     }
-  }, [dataset_id]);
+  }, [dataset_id, session?.user?.apiToken]);
 
   useEffect(() => {
-    if (dataset_id) {
-      fetchDatasetRows();
+    if (dataset_id && session?.user?.apiToken) {
+      fetchDatasetInfo();
     }
-  }, [dataset_id, fetchDatasetRows]);
+  }, [dataset_id, session?.user?.apiToken, fetchDatasetInfo]);
 
   // Generate columns dynamically based on the first row of data
   const generateColumns = (
-    data: Record<string, unknown>[],
-  ): ColumnDef<Record<string, unknown>>[] => {
+    data: Record<string, string | number | boolean | null>[],
+  ): ColumnDef<Record<string, string | number | boolean | null>>[] => {
     if (!data || data.length === 0) return [];
 
     const firstRow = data[0];
@@ -160,7 +164,7 @@ export default function DatasetDetails() {
                   </p>
                   <div className="space-y-1">
                     <p className="text-base text-muted-foreground">
-                      {username}
+                      {datasetData.user_names.length > 0 ? datasetData.user_names[datasetData.user_names.length - 1] : "Unknown User"}
                     </p>
                   </div>
                 </div>
