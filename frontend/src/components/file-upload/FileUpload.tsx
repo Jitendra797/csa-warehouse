@@ -26,9 +26,25 @@ import {
   Loader2,
 } from "lucide-react";
 import { Paperclip } from "lucide-react";
-import { ExtractAndStoreResponse, ExtractCsvDataRequest, extractCsvDatasetsExtractPost, getPresignedUrlPresignedUrlGet, PresignedUrlResponse } from "@/lib/hey-api/client";
+import { useSession } from "next-auth/react";
+import { extractDataset, getPresignedUrl } from "@/lib/hey-api/client/sdk.gen";
 
-interface FileRecord {
+export interface PresignedUrlResponse {
+  upload_url: string;
+  object_name: string;
+}
+
+export interface ExtractCsvDataRequest {
+  file_object: string;
+}
+
+export interface ExtractAndStoreResponse {
+  status: string;
+  file_id: string;
+  dataset_id: string;
+}
+
+export interface FileRecord {
   fileId: number;
   fileExt: string;
   fileName: string;
@@ -108,6 +124,7 @@ export const FileUploader = forwardRef<
     },
     ref,
   ) => {
+    const { data: session } = useSession();
     const [isFileTooBig, setIsFileTooBig] = useState(false);
     const [isLOF, setIsLOF] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -153,13 +170,13 @@ export const FileUploader = forwardRef<
         const uniqueFileName = `${fileNameWithoutExt}_${timestamp}.${fileExt}`;
 
         // Get presigned URL using SDK
-        const response = await getPresignedUrlPresignedUrlGet({
+        const response = await getPresignedUrl({
           query: {
             filename: uniqueFileName,
-            user_id: ""
           },
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${session?.user?.apiToken}`,
+            "Content-Type": "application/json",
           },
         });
         const presignedUrlResponse= response.data as PresignedUrlResponse;
@@ -178,29 +195,25 @@ export const FileUploader = forwardRef<
             "Content-Type": file.type,
           },
         });
-
         if (!uploadResponse.ok) {
           throw new Error("Upload failed");
         }
         console.log("Upload response:", uploadResponse);
 
+        // Extract dataset after successful upload
         const extractCsvDataRequest: ExtractCsvDataRequest = {
           file_object: object_name,
-          user_id: "",
-          user_name: "",
         };
-
-        // Extract CSV data after successful upload
-        const extractresponse = await extractCsvDatasetsExtractPost({
+        const extractresponse = await extractDataset({
           body: extractCsvDataRequest,
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${session?.user?.apiToken}`,
+            "Content-Type": "application/json",
           },
         });
         const extractResponseData = extractresponse.data as ExtractAndStoreResponse;
-
         if (!extractResponseData) {
-          throw new Error("Failed to extract CSV data");
+          throw new Error("Failed to extract dataset");
         }
         const file_id = extractResponseData?.file_id;
         if (!file_id) {
@@ -218,7 +231,7 @@ export const FileUploader = forwardRef<
         console.error("Upload error:", error);
         throw error;
       }
-    }, []);
+    }, [session?.user?.apiToken]);
 
     const onDrop = useCallback(
       async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {

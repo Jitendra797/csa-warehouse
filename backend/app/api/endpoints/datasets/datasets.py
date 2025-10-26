@@ -5,7 +5,8 @@ from io import BytesIO
 from datetime import datetime, timezone
 from pymongo.collection import Collection
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from app.auth.user_auth import get_current_user
 from app.schemas.models import (
     CreateDatasetInformationRequest,
     CreateDatasetInformationResponse,
@@ -22,9 +23,10 @@ from app.services.storage.minio_service import get_minio_service
 datasets_router = APIRouter()
 
 
-@datasets_router.get("/presignedURL", response_model=PresignedURLResponse)
-def get_presigned_url(filename: str, user_id: str) -> PresignedURLResponse:
+@datasets_router.get("/presignedURL", response_model=PresignedURLResponse, operation_id="get_presigned_url")
+def get_presigned_url(filename: str, current_user: dict = Depends(get_current_user)) -> PresignedURLResponse:
     minio_service = get_minio_service()
+    user_id = str(current_user.get("_id"))
     url, object_name = minio_service.generate_presigned_url(
         filename=filename, user_id=user_id)
     return PresignedURLResponse(upload_url=url, object_name=object_name)
@@ -75,10 +77,10 @@ async def create_dataset(request: CreateDatasetInformationRequest) -> CreateData
             status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@datasets_router.post("/datasets/extract", response_model=ExtractAndStoreResponse)
-def extract_csv(request: ExtractCsvDataRequest) -> ExtractAndStoreResponse:
-    new_file_id = uuid.uuid4().hex
-    dataset_id = uuid.uuid4().hex
+@datasets_router.post("/datasets/extract", response_model=ExtractAndStoreResponse, operation_id="extract_dataset")
+def extract_csv(request: ExtractCsvDataRequest, current_user: dict = Depends(get_current_user)) -> ExtractAndStoreResponse:
+    new_file_id = ObjectId()
+    dataset_id = ObjectId()
     minio_service = get_minio_service()
 
     response = minio_service.get_object(object_name=request.file_object)
@@ -93,13 +95,15 @@ def extract_csv(request: ExtractCsvDataRequest) -> ExtractAndStoreResponse:
     response.close()
     response.release_conn()
 
+    current_time = datetime.now(timezone.utc).isoformat()
     file_metadata = {
         "file_id": new_file_id,
         "file_location": request.file_object,
         "file_type": file_type,
         "file_size": file_size,
-        "uploaded_by": request.user_name,
-        "user_id": request.user_id,
+        "user_id": current_user.get("_id"),
+        "created_at": current_time,
+        "updated_at": current_time,
     }
 
     files_collection.insert_one(file_metadata)
@@ -123,7 +127,7 @@ def extract_csv(request: ExtractCsvDataRequest) -> ExtractAndStoreResponse:
         }
     )
 
-    return ExtractAndStoreResponse(status="success", file_id=new_file_id, dataset_id=dataset_id)
+    return ExtractAndStoreResponse(status="success", file_id=str(new_file_id), dataset_id=str(dataset_id))
 
 
 @datasets_router.get("/datasets/columns", response_model=DatasetColumnsResponse)

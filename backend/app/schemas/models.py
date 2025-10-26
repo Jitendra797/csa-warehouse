@@ -269,8 +269,6 @@ class PresignedURLResponse(BaseModel):
 class ExtractCsvDataRequest(BaseModel):
     file_object: str = Field(...,
                              description="MinIO object name (path) of the file")
-    user_id: str = Field(..., description="User ID")
-    user_name: str = Field(..., description="User Name")
 
 
 class ExtractAndStoreResponse(BaseModel):
