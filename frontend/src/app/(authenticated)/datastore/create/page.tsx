@@ -37,8 +37,31 @@ import {
   DatasetConfigurationDialog,
   DatasetConfigFormData,
 } from "@/app/(authenticated)/datastore/create/dataset-cofig-dialogue";
-import { createDatasetDatasetsCreatePost } from "@/lib/hey-api/client/sdk.gen";
-import { CreateDatasetInformationRequest, CreateDatasetInformationResponse } from "@/lib/hey-api/client";
+import { createDataset } from "@/lib/hey-api/client/sdk.gen";
+
+export type TemporalGranularity = "year" | "month" | "day";
+export type SpatialGranularity = "country" | "state" | "district" | "village" | "lat_long";
+
+export interface CreateDatasetInformationRequest {
+  dataset_id: string;
+  file_id: string;
+  dataset_name: string;
+  description: string;
+  tags: string[];
+  dataset_type: string;
+  permission: string;
+  is_spatial: boolean;
+  is_temporal: boolean;
+  temporal_granularities: TemporalGranularity[];
+  spatial_granularities: SpatialGranularity[];
+  location_columns: string[];
+  time_columns: string[];
+}
+
+export interface CreateDatasetInformationResponse {
+  status: string;
+  id: string;
+}
 
 // Zod schemas for each section
 const datasetInformationSchema = z.object({
@@ -148,17 +171,14 @@ export default function Create() {
         dataset_id: uploadedFileData.dataset_id,
         file_id: uploadedFileData.file_id,
         dataset_name: data.name,
-        description: data.description,
-        tags: data.tags || [],
+        description: data.description || '',
         dataset_type: data.category || '',
+        tags: data.tags || [],
         permission: data.permission,
         is_spatial: configData.isSpatial,
         is_temporal: configData.isTemporal,
         spatial_granularities: [],
         temporal_granularities: [],
-        user_name: session?.user?.name || "default_user",
-        user_email: session?.user?.email || "default_email",
-        user_id: session?.user?.name || "default_id",
         location_columns: [],
         time_columns: []
       };
@@ -166,7 +186,7 @@ export default function Create() {
 
       // Make the API call
       const response =
-        await createDatasetDatasetsCreatePost({
+        await createDataset({
           body: datasetPayload,
           headers: {
             Authorization: `Bearer ${session?.user?.apiToken}`,
