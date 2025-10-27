@@ -5,121 +5,149 @@
  * Schema representing the response returned when browsing datasets
  */
 export type BrowseResponse = {
-  /**
-   * Data
-   */
-  data: Array<DatasetInfo>;
+    /**
+     * Data
+     */
+    data: Array<DatasetCardInfo>;
 };
 
 /**
  * CreateDatasetInformationRequest
  */
 export type CreateDatasetInformationRequest = {
-  /**
-   * Dataset Id
-   * Dataset ID from /datasets/store
-   */
-  dataset_id: string;
-  /**
-   * File Id
-   * File ID from /datasets/extract
-   */
-  file_id: string;
-  /**
-   * Dataset Name
-   * Name of the dataset
-   */
-  dataset_name: string;
-  /**
-   * Description
-   * Description of the dataset
-   */
-  description?: string | null;
-  /**
-   * Tags
-   * Tags for dataset
-   */
-  tags?: Array<string>;
-  /**
-   * Dataset Type
-   * Type of dataset
-   */
-  dataset_type: string;
-  /**
-   * Permission
-   * Access permission
-   */
-  permission: string;
-  /**
-   * Is Spatial
-   * Spatial dataset?
-   */
-  is_spatial?: boolean;
-  /**
-   * Is Temporal
-   * Temporal dataset?
-   */
-  is_temporal?: boolean;
-  /**
-   * Temporal Granularities
-   */
-  temporal_granularities?: Array<TemporalGranularity> | null;
-  /**
-   * Spatial Granularities
-   */
-  spatial_granularities?: Array<SpatialGranularity> | null;
-  /**
-   * Location Columns
-   * location columns
-   */
-  location_columns?: Array<string> | null;
-  /**
-   * Time Columns
-   * time columns
-   */
-  time_columns?: Array<string> | null;
-  /**
-   * User Id
-   * User ID
-   */
-  user_id: string;
-  /**
-   * User Name
-   * User name
-   */
-  user_name: string;
-  /**
-   * User Email
-   * User email
-   */
-  user_email?: string | null;
+    /**
+     * Dataset Id
+     * Dataset ID from /datasets/extract
+     */
+    dataset_id: string;
+    /**
+     * File Id
+     * File ID from /datasets/extract
+     */
+    file_id: string;
+    /**
+     * Dataset Name
+     * Name of the dataset
+     */
+    dataset_name: string;
+    /**
+     * Description
+     * Description of the dataset
+     */
+    description: string;
+    /**
+     * Tags
+     * Tags for dataset
+     */
+    tags: Array<string>;
+    /**
+     * Dataset Type
+     * Type of dataset
+     */
+    dataset_type: string;
+    /**
+     * Permission
+     * Access permission
+     */
+    permission: string;
+    /**
+     * Is Spatial
+     * Spatial dataset?
+     */
+    is_spatial: boolean;
+    /**
+     * Is Temporal
+     * Temporal dataset?
+     */
+    is_temporal: boolean;
+    /**
+     * Temporal Granularities
+     * Temporal granularities
+     */
+    temporal_granularities: Array<TemporalGranularity>;
+    /**
+     * Spatial Granularities
+     * Spatial granularities
+     */
+    spatial_granularities: Array<SpatialGranularity>;
+    /**
+     * Location Columns
+     * location columns
+     */
+    location_columns: Array<string>;
+    /**
+     * Time Columns
+     * time columns
+     */
+    time_columns: Array<string>;
 };
 
 /**
  * CreateDatasetInformationResponse
  */
 export type CreateDatasetInformationResponse = {
-  /**
-   * Status
-   * Response Status
-   */
-  status: string;
-  /**
-   * Id
-   * Unique identifier for the dataset
-   */
-  id: string;
+    /**
+     * Status
+     * Response Status
+     */
+    status: string;
+    /**
+     * Id
+     * Unique identifier for the dataset
+     */
+    id: string;
+};
+
+/**
+ * DatasetCardInfo
+ */
+export type DatasetCardInfo = {
+    /**
+     * Dataset Id
+     * Unique identifier for the dataset
+     */
+    dataset_id: string;
+    /**
+     * Dataset Name
+     * Name of the dataset
+     */
+    dataset_name: string;
+    /**
+     * Description
+     * Description about the dataset
+     */
+    description: string;
+    /**
+     * Pulled From Pipeline
+     * Whether dataset is pulled from a pipeline
+     */
+    pulled_from_pipeline: boolean;
+    /**
+     * Updated At
+     * Timestamp when the dataset was updated
+     */
+    updated_at: string;
+    /**
+     * User Emails
+     * List of user emails associated with the dataset
+     */
+    user_emails: Array<string>;
+    /**
+     * User Names
+     * List of user names associated with the dataset
+     */
+    user_names: Array<string>;
 };
 
 /**
  * DatasetColumnsResponse
  */
 export type DatasetColumnsResponse = {
-  /**
-   * Columns
-   * List of dataset column names (filtered)
-   */
-  columns: Array<string>;
+    /**
+     * Columns
+     * List of dataset column names (filtered)
+     */
+    columns: Array<string>;
 };
 
 /**
@@ -127,190 +155,103 @@ export type DatasetColumnsResponse = {
  * Schema representing detailed dataset information.
  */
 export type DatasetDetail = {
-  /**
-   * Dataset Id
-   * Unique identifier for the dataset
-   */
-  dataset_id: string;
-  /**
-   * Dataset Name
-   * Name of the dataset
-   */
-  dataset_name: string;
-  /**
-   * File Id
-   * ID of the file in storage
-   */
-  file_id: string;
-  /**
-   * Description
-   * Optional description of the dataset
-   */
-  description: string;
-  /**
-   * Tags
-   * List of tags associated with the dataset
-   */
-  tags: Array<string>;
-  /**
-   * Dataset Type
-   * Type of the dataset
-   */
-  dataset_type: string;
-  /**
-   * Permissions
-   * Permissions associated with the dataset
-   */
-  permissions: string;
-  /**
-   * Is Spatial
-   * Whether the dataset contains spatial data
-   */
-  is_spatial: boolean;
-  /**
-   * Is Temporial
-   * Whether the dataset contains temporal data
-   */
-  is_temporial: boolean;
-  /**
-   * Temporal Granularities
-   * Temporal Granularities
-   */
-  temporal_granularities: Array<TemporalGranularity> | null;
-  /**
-   * Spatial Granularities
-   * Spatial Granularities
-   */
-  spatial_granularities: Array<SpatialGranularity> | null;
-  /**
-   * Location Columns
-   * location columns
-   */
-  location_columns: Array<string> | null;
-  /**
-   * Time Columns
-   * time columns
-   */
-  time_columns: Array<string> | null;
-  /**
-   * Pulled From Pipeline
-   * Whether the dataset was pulled from a pipeline
-   */
-  pulled_from_pipeline: boolean;
-  /**
-   * Created At
-   * Timestamp when the dataset was created
-   */
-  created_at: string;
-  /**
-   * Updated At
-   * Timestamp when the dataset was last updated
-   */
-  updated_at: string;
-  /**
-   * User Id
-   * List of user IDs associated with the dataset
-   */
-  user_id: Array<string>;
-  /**
-   * User Name
-   * List of usernames associated with the dataset
-   */
-  user_name: Array<string>;
-  /**
-   * User Email
-   * List of user emails associated with the dataset
-   */
-  user_email: Array<string>;
-  /**
-   * Rows
-   * Preview of dataset records (top 10 rows & columns)
-   */
-  rows: Array<{
-    [key: string]: unknown;
-  }>;
-};
-
-/**
- * DatasetInfo
- * Schema representing a single dataset entry
- */
-export type DatasetInfo = {
-  /**
-   * Dataset Id
-   * Unique identifier for the dataset
-   */
-  dataset_id: string;
-  /**
-   * Dataset Name
-   * Name of the dataset
-   */
-  dataset_name: string;
-  /**
-   * File Id
-   * ID of the file in storage
-   */
-  file_id: string;
-  /**
-   * Description
-   * Description about the dataset
-   */
-  description: string;
-  /**
-   * Tags
-   * List of tags associated with the dataset
-   */
-  tags: Array<string>;
-  /**
-   * Dataset Type
-   * Type of the dataset
-   */
-  dataset_type: string;
-  /**
-   * Permissions
-   * Permissions associated with the dataset
-   */
-  permissions: string;
-  /**
-   * Is Spatial
-   * Whether the dataset has spatial data
-   */
-  is_spatial: boolean;
-  /**
-   * Is Temporial
-   * Whether the dataset has temporal data
-   */
-  is_temporial: boolean;
-  /**
-   * Pulled From Pipeline
-   * Whether dataset is pulled from a pipeline
-   */
-  pulled_from_pipeline: boolean;
-  /**
-   * Created At
-   * Timestamp when the dataset is created
-   */
-  created_at: string;
-  /**
-   * Updated At
-   * Timestamp when the dataset was updated
-   */
-  updated_at: string;
-  /**
-   * User Id
-   * List of user IDs associated with the dataset
-   */
-  user_id: Array<string>;
-  /**
-   * User Name
-   * List of usernames associated with the dataset
-   */
-  user_name: Array<string>;
-  /**
-   * User Email
-   * List of user emails associated with the dataset
-   */
-  user_email: Array<string>;
+    /**
+     * Dataset Id
+     * Unique identifier for the dataset
+     */
+    dataset_id: string;
+    /**
+     * Dataset Name
+     * Name of the dataset
+     */
+    dataset_name: string;
+    /**
+     * File Id
+     * ID of the file in storage
+     */
+    file_id: string;
+    /**
+     * Description
+     * Optional description of the dataset
+     */
+    description: string;
+    /**
+     * Tags
+     * List of tags associated with the dataset
+     */
+    tags: Array<string>;
+    /**
+     * Dataset Type
+     * Type of the dataset
+     */
+    dataset_type: string;
+    /**
+     * Permissions
+     * Permissions associated with the dataset
+     */
+    permissions: string;
+    /**
+     * Is Spatial
+     * Whether the dataset contains spatial data
+     */
+    is_spatial: boolean;
+    /**
+     * Is Temporal
+     * Whether the dataset contains temporal data
+     */
+    is_temporal: boolean;
+    /**
+     * Temporal Granularities
+     * Temporal Granularities
+     */
+    temporal_granularities: Array<TemporalGranularity> | null;
+    /**
+     * Spatial Granularities
+     * Spatial Granularities
+     */
+    spatial_granularities: Array<SpatialGranularity> | null;
+    /**
+     * Location Columns
+     * location columns
+     */
+    location_columns: Array<string> | null;
+    /**
+     * Time Columns
+     * time columns
+     */
+    time_columns: Array<string> | null;
+    /**
+     * Pulled From Pipeline
+     * Whether the dataset was pulled from a pipeline
+     */
+    pulled_from_pipeline: boolean;
+    /**
+     * Created At
+     * Timestamp when the dataset was created
+     */
+    created_at: string;
+    /**
+     * Updated At
+     * Timestamp when the dataset was last updated
+     */
+    updated_at: string;
+    /**
+     * User Names
+     * List of user names associated with the dataset
+     */
+    user_names: Array<string>;
+    /**
+     * User Emails
+     * List of user emails associated with the dataset
+     */
+    user_emails: Array<string>;
+    /**
+     * Rows
+     * Preview of dataset records (top 10 rows & columns)
+     */
+    rows: Array<{
+        [key: string]: string | number | number | boolean | null;
+    }>;
 };
 
 /**
@@ -318,632 +259,629 @@ export type DatasetInfo = {
  * Response schema for fetching dataset details.
  */
 export type DatasetInfoResponse = {
-  /**
-   * Status
-   * Status of the request
-   */
-  status: string;
-  data: DatasetDetail;
+    /**
+     * Status
+     * Status of the request
+     */
+    status: string;
+    data: DatasetDetail;
 };
 
 /**
  * ExtractAndStoreResponse
  */
 export type ExtractAndStoreResponse = {
-  /**
-   * Status
-   * Response Status
-   */
-  status: string;
-  /**
-   * File Id
-   * File ID from files collection
-   */
-  file_id: string;
-  /**
-   * Dataset Id
-   * Dataset ID from datasets collection
-   */
-  dataset_id: string;
+    /**
+     * Status
+     * Response Status
+     */
+    status: string;
+    /**
+     * File Id
+     * File ID from files collection
+     */
+    file_id: string;
+    /**
+     * Dataset Id
+     * Dataset ID from datasets collection
+     */
+    dataset_id: string;
 };
 
 /**
  * ExtractCsvDataRequest
  */
 export type ExtractCsvDataRequest = {
-  /**
-   * File Object
-   * MinIO object name (path) of the file
-   */
-  file_object: string;
-  /**
-   * User Id
-   * User ID
-   */
-  user_id: string;
-  /**
-   * User Name
-   * User Name
-   */
-  user_name: string;
+    /**
+     * File Object
+     * MinIO object name (path) of the file
+     */
+    file_object: string;
+};
+
+/**
+ * GetPipelinesResponse
+ * Response model for the simplified pipelines endpoint
+ */
+export type GetPipelinesResponse = {
+    /**
+     * Data
+     * List of pipelines
+     */
+    data: Array<PipelineItem>;
 };
 
 /**
  * HTTPValidationError
  */
 export type HttpValidationError = {
-  /**
-   * Detail
-   */
-  detail?: Array<ValidationError>;
+    /**
+     * Detail
+     */
+    detail?: Array<ValidationError>;
 };
 
 /**
  * ManageResponse
  */
 export type ManageResponse = {
-  /**
-   * Data
-   */
-  data: Array<DatasetInfo>;
-};
-
-/**
- * PipelineHistoryItem
- */
-export type PipelineHistoryItem = {
-  /**
-   * Exec Id
-   * Execution ID of the pipeline run
-   */
-  exec_id: string;
-  /**
-   * Status
-   * Status of the execution (success, failed, running, completed)
-   */
-  status: string;
-  /**
-   * User
-   * User who executed the pipeline
-   */
-  user: string;
-  /**
-   * Executed At
-   * Timestamp when the pipeline was executed
-   */
-  executed_at: string;
+    /**
+     * Data
+     */
+    data: Array<DatasetCardInfo>;
 };
 
 /**
  * PipelineItem
+ * Internal model for database operations with ObjectId support
  */
 export type PipelineItem = {
-  /**
-   * Id
-   * MongoDB unique identifier of the pipeline
-   */
-  _id: string;
-  /**
-   * Pipeline Name
-   * Name of the pipeline
-   */
-  pipeline_name: string;
-  /**
-   * History
-   * Execution history of the pipeline
-   */
-  history: Array<PipelineHistoryItem>;
+    /**
+     * Id
+     * MongoDB unique identifier of the pipeline
+     */
+    _id: string;
+    /**
+     * Pipeline Name
+     * Name of the pipeline
+     */
+    pipeline_name: string;
+    /**
+     * Is Enabled
+     * Whether the pipeline is enabled
+     */
+    is_enabled: boolean;
+    /**
+     * Status of the pipeline
+     */
+    pipeline_status: PipelineStatus;
 };
 
 /**
- * PipelineStatusResponse
+ * PipelineStatus
+ * Enum for pipeline status values
  */
-export type PipelineStatusResponse = {
-  /**
-   * Status
-   * Status of the pipeline
-   */
-  status: string;
-};
+export type PipelineStatus = 'running' | 'completed' | 'error' | 'null';
 
 /**
  * PresignedURLResponse
  */
 export type PresignedUrlResponse = {
-  /**
-   * Upload Url
-   * Presigned URL to upload the file
-   */
-  upload_url: string;
-  /**
-   * Object Name
-   * Object name in storage
-   */
-  object_name: string;
+    /**
+     * Upload Url
+     * Presigned URL to upload the file
+     */
+    upload_url: string;
+    /**
+     * Object Name
+     * Object name in storage
+     */
+    object_name: string;
 };
 
 /**
- * ResponseGetPipelines
+ * RoleCheckRequest
+ * Request schema for role checking.
  */
-export type ResponseGetPipelines = {
-  /**
-   * Data
-   * List of pipelines with their execution history
-   */
-  data: Array<PipelineItem>;
+export type RoleCheckRequest = {
+    /**
+     * Path
+     * Path to check access for
+     */
+    path: string;
+};
+
+/**
+ * RoleCheckResponse
+ * Response schema for role checking.
+ */
+export type RoleCheckResponse = {
+    /**
+     * Viewer
+     * Viewer permission
+     */
+    viewer?: boolean;
+    /**
+     * Contributor
+     * Contributor permission
+     */
+    contributor?: boolean;
+    /**
+     * Admin
+     * Admin permission
+     */
+    admin?: boolean;
+    /**
+     * Role Name
+     * User's role name
+     */
+    role_name?: string | null;
 };
 
 /**
  * RunPipelineRequest
  */
 export type RunPipelineRequest = {
-  /**
-   * Pipeline Id
-   * Unique identifier of the pipeline to run
-   */
-  pipeline_id: string;
-  /**
-   * Pipeline Name
-   * Name of the pipeline
-   */
-  pipeline_name: string;
-  /**
-   * User Id
-   * User ID of the user executing the pipeline
-   */
-  user_id?: string;
-  /**
-   * User Name
-   * Username of the user executing the pipeline
-   */
-  user_name: string;
-  /**
-   * User Email
-   * Email of the user executing the pipeline
-   */
-  user_email: string;
+    /**
+     * Pipeline Id
+     * Unique identifier of the pipeline to run
+     */
+    pipeline_id: string;
+    /**
+     * Pipeline Name
+     * Name of the pipeline
+     */
+    pipeline_name: string;
 };
 
 /**
  * RunPipelineResponse
  */
 export type RunPipelineResponse = {
-  /**
-   * Status
-   * The current status of the pipeline
-   */
-  status: "running" | "success" | "failed";
-  /**
-   * Execution Id
-   * Execution ID for the pipeline
-   */
-  execution_id: string;
-  /**
-   * Executed At
-   * Timestamp when the pipeline was executed
-   */
-  executed_at: string;
-  /**
-   * User
-   * Username of the user who executed the pipeline
-   */
-  user: string;
+    /**
+     * The current status of the pipeline
+     */
+    status: PipelineStatus;
+    /**
+     * Execution Id
+     * Execution ID for the pipeline
+     */
+    execution_id: string;
+    /**
+     * Executed At
+     * Timestamp when the pipeline was executed
+     */
+    executed_at: string;
 };
 
 /**
  * SpatialGranularity
  */
-export type SpatialGranularity =
-  | "country"
-  | "state"
-  | "district"
-  | "village"
-  | "lat_long";
+export type SpatialGranularity = 'country' | 'state' | 'district' | 'village' | 'lat_long';
 
 /**
  * TemporalGranularity
  */
-export type TemporalGranularity = "year" | "month" | "day";
+export type TemporalGranularity = 'year' | 'month' | 'day';
 
 /**
  * ValidationError
  */
 export type ValidationError = {
-  /**
-   * Location
-   */
-  loc: Array<string | number>;
-  /**
-   * Message
-   */
-  msg: string;
-  /**
-   * Error Type
-   */
-  type: string;
-};
-
-export type RunPipelinePipelinesRunPostData = {
-  body: RunPipelineRequest;
-  path?: never;
-  query?: never;
-  url: "/pipelines/run";
-};
-
-export type RunPipelinePipelinesRunPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type RunPipelinePipelinesRunPostError =
-  RunPipelinePipelinesRunPostErrors[keyof RunPipelinePipelinesRunPostErrors];
-
-export type RunPipelinePipelinesRunPostResponses = {
-  /**
-   * Successful Response
-   */
-  200: RunPipelineResponse;
-};
-
-export type RunPipelinePipelinesRunPostResponse =
-  RunPipelinePipelinesRunPostResponses[keyof RunPipelinePipelinesRunPostResponses];
-
-export type GetPipelineStatusPipelineStatusGetData = {
-  body?: never;
-  path?: never;
-  query: {
     /**
-     * Dataset Id
+     * Location
      */
-    dataset_id: string;
+    loc: Array<string | number>;
     /**
-     * Exec Id
+     * Message
      */
-    exec_id: string | null;
-  };
-  url: "/pipeline/status";
+    msg: string;
+    /**
+     * Error Type
+     */
+    type: string;
 };
 
-export type GetPipelineStatusPipelineStatusGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+export type GetPipelinesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/pipelines';
 };
 
-export type GetPipelineStatusPipelineStatusGetError =
-  GetPipelineStatusPipelineStatusGetErrors[keyof GetPipelineStatusPipelineStatusGetErrors];
-
-export type GetPipelineStatusPipelineStatusGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: PipelineStatusResponse;
+export type GetPipelinesResponses = {
+    /**
+     * Successful Response
+     */
+    200: GetPipelinesResponse;
 };
 
-export type GetPipelineStatusPipelineStatusGetResponse =
-  GetPipelineStatusPipelineStatusGetResponses[keyof GetPipelineStatusPipelineStatusGetResponses];
+export type GetPipelinesResponse2 = GetPipelinesResponses[keyof GetPipelinesResponses];
 
-export type GetPipelinesPipelinesGetData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/pipelines";
+export type RunPipelineData = {
+    body: RunPipelineRequest;
+    path?: never;
+    query?: never;
+    url: '/pipelines/run';
 };
 
-export type GetPipelinesPipelinesGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: ResponseGetPipelines;
+export type RunPipelineErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
-export type GetPipelinesPipelinesGetResponse =
-  GetPipelinesPipelinesGetResponses[keyof GetPipelinesPipelinesGetResponses];
+export type RunPipelineError = RunPipelineErrors[keyof RunPipelineErrors];
+
+export type RunPipelineResponses = {
+    /**
+     * Successful Response
+     */
+    200: RunPipelineResponse;
+};
+
+export type RunPipelineResponse2 = RunPipelineResponses[keyof RunPipelineResponses];
+
+export type GetPipelineStatusData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Pipeline Id
+         */
+        pipeline_id: string;
+        /**
+         * Execution Id
+         */
+        execution_id: string;
+    };
+    url: '/pipeline/status';
+};
+
+export type GetPipelineStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPipelineStatusError = GetPipelineStatusErrors[keyof GetPipelineStatusErrors];
+
+export type GetPipelineStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: PipelineStatus;
+};
+
+export type GetPipelineStatusResponse = GetPipelineStatusResponses[keyof GetPipelineStatusResponses];
 
 export type GetFilteredPipelinesPipelinesFilterGetData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Pipeline
-     */
-    pipeline: string | null;
-    /**
-     * Date
-     */
-    date: string | null;
-  };
-  url: "/pipelines/filter";
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Pipeline
+         */
+        pipeline: string | null;
+        /**
+         * Date
+         */
+        date: string | null;
+    };
+    url: '/pipelines/filter';
 };
 
 export type GetFilteredPipelinesPipelinesFilterGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
-export type GetFilteredPipelinesPipelinesFilterGetError =
-  GetFilteredPipelinesPipelinesFilterGetErrors[keyof GetFilteredPipelinesPipelinesFilterGetErrors];
+export type GetFilteredPipelinesPipelinesFilterGetError = GetFilteredPipelinesPipelinesFilterGetErrors[keyof GetFilteredPipelinesPipelinesFilterGetErrors];
 
 export type GetFilteredPipelinesPipelinesFilterGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: ResponseGetPipelines;
-};
-
-export type GetFilteredPipelinesPipelinesFilterGetResponse =
-  GetFilteredPipelinesPipelinesFilterGetResponses[keyof GetFilteredPipelinesPipelinesFilterGetResponses];
-
-export type GetPresignedUrlPresignedUrlGetData = {
-  body?: never;
-  path?: never;
-  query: {
     /**
-     * Filename
+     * Successful Response
      */
-    filename: string;
+    200: GetPipelinesResponse;
+};
+
+export type GetFilteredPipelinesPipelinesFilterGetResponse = GetFilteredPipelinesPipelinesFilterGetResponses[keyof GetFilteredPipelinesPipelinesFilterGetResponses];
+
+export type GetPresignedUrlData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Filename
+         */
+        filename: string;
+    };
+    url: '/presignedURL';
+};
+
+export type GetPresignedUrlErrors = {
     /**
-     * User Id
+     * Validation Error
      */
-    user_id: string;
-  };
-  url: "/presignedURL";
+    422: HttpValidationError;
 };
 
-export type GetPresignedUrlPresignedUrlGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
+export type GetPresignedUrlError = GetPresignedUrlErrors[keyof GetPresignedUrlErrors];
 
-export type GetPresignedUrlPresignedUrlGetError =
-  GetPresignedUrlPresignedUrlGetErrors[keyof GetPresignedUrlPresignedUrlGetErrors];
-
-export type GetPresignedUrlPresignedUrlGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: PresignedUrlResponse;
-};
-
-export type GetPresignedUrlPresignedUrlGetResponse =
-  GetPresignedUrlPresignedUrlGetResponses[keyof GetPresignedUrlPresignedUrlGetResponses];
-
-export type CreateDatasetDatasetsCreatePostData = {
-  body: CreateDatasetInformationRequest;
-  path?: never;
-  query?: never;
-  url: "/datasets/create";
-};
-
-export type CreateDatasetDatasetsCreatePostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type CreateDatasetDatasetsCreatePostError =
-  CreateDatasetDatasetsCreatePostErrors[keyof CreateDatasetDatasetsCreatePostErrors];
-
-export type CreateDatasetDatasetsCreatePostResponses = {
-  /**
-   * Successful Response
-   */
-  200: CreateDatasetInformationResponse;
-};
-
-export type CreateDatasetDatasetsCreatePostResponse =
-  CreateDatasetDatasetsCreatePostResponses[keyof CreateDatasetDatasetsCreatePostResponses];
-
-export type ExtractCsvDatasetsExtractPostData = {
-  body: ExtractCsvDataRequest;
-  path?: never;
-  query?: never;
-  url: "/datasets/extract";
-};
-
-export type ExtractCsvDatasetsExtractPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type ExtractCsvDatasetsExtractPostError =
-  ExtractCsvDatasetsExtractPostErrors[keyof ExtractCsvDatasetsExtractPostErrors];
-
-export type ExtractCsvDatasetsExtractPostResponses = {
-  /**
-   * Successful Response
-   */
-  200: ExtractAndStoreResponse;
-};
-
-export type ExtractCsvDatasetsExtractPostResponse =
-  ExtractCsvDatasetsExtractPostResponses[keyof ExtractCsvDatasetsExtractPostResponses];
-
-export type GetDatasetColumnsDatasetsColumnsGetData = {
-  body?: never;
-  path?: never;
-  query: {
+export type GetPresignedUrlResponses = {
     /**
-     * Dataset Id
+     * Successful Response
      */
-    dataset_id: string;
+    200: PresignedUrlResponse;
+};
+
+export type GetPresignedUrlResponse = GetPresignedUrlResponses[keyof GetPresignedUrlResponses];
+
+export type CreateDatasetData = {
+    body: CreateDatasetInformationRequest;
+    path?: never;
+    query?: never;
+    url: '/datasets/create';
+};
+
+export type CreateDatasetErrors = {
     /**
-     * Search
+     * Validation Error
      */
-    search?: string;
-  };
-  url: "/datasets/columns";
+    422: HttpValidationError;
 };
 
-export type GetDatasetColumnsDatasetsColumnsGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+export type CreateDatasetError = CreateDatasetErrors[keyof CreateDatasetErrors];
+
+export type CreateDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CreateDatasetInformationResponse;
 };
 
-export type GetDatasetColumnsDatasetsColumnsGetError =
-  GetDatasetColumnsDatasetsColumnsGetErrors[keyof GetDatasetColumnsDatasetsColumnsGetErrors];
+export type CreateDatasetResponse = CreateDatasetResponses[keyof CreateDatasetResponses];
 
-export type GetDatasetColumnsDatasetsColumnsGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: DatasetColumnsResponse;
+export type ExtractDatasetData = {
+    body: ExtractCsvDataRequest;
+    path?: never;
+    query?: never;
+    url: '/datasets/extract';
 };
 
-export type GetDatasetColumnsDatasetsColumnsGetResponse =
-  GetDatasetColumnsDatasetsColumnsGetResponses[keyof GetDatasetColumnsDatasetsColumnsGetResponses];
+export type ExtractDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExtractDatasetError = ExtractDatasetErrors[keyof ExtractDatasetErrors];
+
+export type ExtractDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExtractAndStoreResponse;
+};
+
+export type ExtractDatasetResponse = ExtractDatasetResponses[keyof ExtractDatasetResponses];
+
+export type GetDatasetColumnsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+        /**
+         * Search
+         */
+        search?: string;
+    };
+    url: '/datasets/columns';
+};
+
+export type GetDatasetColumnsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDatasetColumnsError = GetDatasetColumnsErrors[keyof GetDatasetColumnsErrors];
+
+export type GetDatasetColumnsResponses = {
+    /**
+     * Successful Response
+     */
+    200: DatasetColumnsResponse;
+};
+
+export type GetDatasetColumnsResponse = GetDatasetColumnsResponses[keyof GetDatasetColumnsResponses];
 
 export type EditDatasetDatasetsDatasetIdEditPutData = {
-  body?: never;
-  path: {
-    /**
-     * Dataset Id
-     */
-    dataset_id: unknown;
-  };
-  query?: never;
-  url: "/datasets/{dataset_id}/edit";
+    body?: never;
+    path: {
+        /**
+         * Dataset Id
+         */
+        dataset_id: unknown;
+    };
+    query?: never;
+    url: '/datasets/{dataset_id}/edit';
 };
 
 export type EditDatasetDatasetsDatasetIdEditPutErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
-export type EditDatasetDatasetsDatasetIdEditPutError =
-  EditDatasetDatasetsDatasetIdEditPutErrors[keyof EditDatasetDatasetsDatasetIdEditPutErrors];
+export type EditDatasetDatasetsDatasetIdEditPutError = EditDatasetDatasetsDatasetIdEditPutErrors[keyof EditDatasetDatasetsDatasetIdEditPutErrors];
 
 export type EditDatasetDatasetsDatasetIdEditPutResponses = {
-  /**
-   * Successful Response
-   */
-  200: unknown;
+    /**
+     * Successful Response
+     */
+    200: unknown;
 };
 
 export type DeleteDatasetDatasetsDatasetIdDeleteData = {
-  body?: never;
-  path: {
-    /**
-     * Dataset Id
-     */
-    dataset_id: unknown;
-  };
-  query?: never;
-  url: "/datasets/{dataset_id}";
+    body?: never;
+    path: {
+        /**
+         * Dataset Id
+         */
+        dataset_id: unknown;
+    };
+    query?: never;
+    url: '/datasets/{dataset_id}';
 };
 
 export type DeleteDatasetDatasetsDatasetIdDeleteErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
-export type DeleteDatasetDatasetsDatasetIdDeleteError =
-  DeleteDatasetDatasetsDatasetIdDeleteErrors[keyof DeleteDatasetDatasetsDatasetIdDeleteErrors];
+export type DeleteDatasetDatasetsDatasetIdDeleteError = DeleteDatasetDatasetsDatasetIdDeleteErrors[keyof DeleteDatasetDatasetsDatasetIdDeleteErrors];
 
 export type DeleteDatasetDatasetsDatasetIdDeleteResponses = {
-  /**
-   * Successful Response
-   */
-  200: unknown;
-};
-
-export type GetDatasetsDatasetsGetData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/datasets";
-};
-
-export type GetDatasetsDatasetsGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: BrowseResponse;
-};
-
-export type GetDatasetsDatasetsGetResponse =
-  GetDatasetsDatasetsGetResponses[keyof GetDatasetsDatasetsGetResponses];
-
-export type GetDatasetInfoDatasetGetData = {
-  body?: never;
-  path?: never;
-  query: {
     /**
-     * Id
+     * Successful Response
      */
-    id: string;
-  };
-  url: "/dataset";
+    200: unknown;
 };
 
-export type GetDatasetInfoDatasetGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+export type GetDatasetsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/datasets';
 };
 
-export type GetDatasetInfoDatasetGetError =
-  GetDatasetInfoDatasetGetErrors[keyof GetDatasetInfoDatasetGetErrors];
-
-export type GetDatasetInfoDatasetGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: DatasetInfoResponse;
-};
-
-export type GetDatasetInfoDatasetGetResponse =
-  GetDatasetInfoDatasetGetResponses[keyof GetDatasetInfoDatasetGetResponses];
-
-export type GetUserDatasetsUserDatasetsGetData = {
-  body?: never;
-  path?: never;
-  query: {
+export type GetDatasetsResponses = {
     /**
-     * User Id
+     * Successful Response
      */
-    user_id: string;
-  };
-  url: "/user/datasets";
+    200: BrowseResponse;
 };
 
-export type GetUserDatasetsUserDatasetsGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
+export type GetDatasetsResponse = GetDatasetsResponses[keyof GetDatasetsResponses];
+
+export type GetDatasetInfoData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    url: '/dataset';
 };
 
-export type GetUserDatasetsUserDatasetsGetError =
-  GetUserDatasetsUserDatasetsGetErrors[keyof GetUserDatasetsUserDatasetsGetErrors];
-
-export type GetUserDatasetsUserDatasetsGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: ManageResponse;
+export type GetDatasetInfoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
-export type GetUserDatasetsUserDatasetsGetResponse =
-  GetUserDatasetsUserDatasetsGetResponses[keyof GetUserDatasetsUserDatasetsGetResponses];
+export type GetDatasetInfoError = GetDatasetInfoErrors[keyof GetDatasetInfoErrors];
+
+export type GetDatasetInfoResponses = {
+    /**
+     * Successful Response
+     */
+    200: DatasetInfoResponse;
+};
+
+export type GetDatasetInfoResponse = GetDatasetInfoResponses[keyof GetDatasetInfoResponses];
+
+export type GetUserDatasetsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/user/datasets';
+};
+
+export type GetUserDatasetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManageResponse;
+};
+
+export type GetUserDatasetsResponse = GetUserDatasetsResponses[keyof GetUserDatasetsResponses];
+
+export type AuthenticateWithGoogleUsersAuthGooglePostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/auth/google';
+};
+
+export type AuthenticateWithGoogleUsersAuthGooglePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type CheckUserRoleAccessUsersRoleCheckPostData = {
+    body: RoleCheckRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/users/role-check';
+};
+
+export type CheckUserRoleAccessUsersRoleCheckPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CheckUserRoleAccessUsersRoleCheckPostError = CheckUserRoleAccessUsersRoleCheckPostErrors[keyof CheckUserRoleAccessUsersRoleCheckPostErrors];
+
+export type CheckUserRoleAccessUsersRoleCheckPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: RoleCheckResponse;
+};
+
+export type CheckUserRoleAccessUsersRoleCheckPostResponse = CheckUserRoleAccessUsersRoleCheckPostResponses[keyof CheckUserRoleAccessUsersRoleCheckPostResponses];
+
+export type InitializeEndpointAccessUsersRoleCheckInitGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/role-check/init';
+};
+
+export type InitializeEndpointAccessUsersRoleCheckInitGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type ClientOptions = {
-  baseUrl: "http://localhost:8000" | (string & {});
+    baseUrl: 'http://localhost:8000' | (string & {});
 };
