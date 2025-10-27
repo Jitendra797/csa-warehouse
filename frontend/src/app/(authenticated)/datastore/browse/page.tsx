@@ -4,24 +4,44 @@ import { Search, Loader2 } from "lucide-react";
 import { DatasetCard } from "./datasetcard";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { useState, useEffect } from "react";
-import { getDatasetsDatasetsGet } from "@/lib/hey-api/client/sdk.gen";
-import { BrowseResponse, DatasetInfo } from "@/lib/hey-api/client/types.gen";
+import { getDatasets } from "@/lib/hey-api/client/sdk.gen";
+import { useSession } from "next-auth/react";
+
+export interface DatasetCardInfo {
+  dataset_id: string;
+  dataset_name: string;
+  description: string;
+  pulled_from_pipeline: boolean;
+  updated_at: string;
+  user_emails: string[];
+  user_names: string[];
+}
 
 export default function Browse() {
-  const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
+  const [datasets, setDatasets] = useState<DatasetCardInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const fetchDatasets = async () => {
+      if (!session?.user?.apiToken) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        const response = await getDatasetsDatasetsGet();
+        const response = await getDatasets({
+          headers: {
+            Authorization: `Bearer ${session.user.apiToken}`,
+          },
+        });
         if (response.data) {
-          const responseData: BrowseResponse = response.data;
-          const datasetsInfo: DatasetInfo[] = responseData.data;
+          const responseData = response.data;
+          const datasetsInfo: DatasetCardInfo[] = responseData.data;
           setDatasets(datasetsInfo);
         } else {
           throw new Error("Failed to fetch datasets");
@@ -35,7 +55,7 @@ export default function Browse() {
     };
 
     fetchDatasets();
-  }, []);
+  }, [session?.user?.apiToken]);
 
   return (
     <ContentLayout title="Browse">
@@ -60,10 +80,10 @@ export default function Browse() {
               dataset_id={dataset.dataset_id}
               dataset_name={dataset.dataset_name}
               description={dataset.description}
-              useremails={dataset.user_email}
-              usernames={dataset.user_name}
-              updated_at={dataset.updated_at}
               pulled_from_pipeline={dataset.pulled_from_pipeline}
+              updated_at={dataset.updated_at}
+              user_emails={dataset.user_emails}
+              user_names={dataset.user_names}
             />
           ))}
         </div>

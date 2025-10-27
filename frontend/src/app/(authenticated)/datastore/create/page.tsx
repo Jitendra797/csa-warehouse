@@ -37,8 +37,36 @@ import {
   DatasetConfigurationDialog,
   DatasetConfigFormData,
 } from "@/app/(authenticated)/datastore/create/dataset-cofig-dialogue";
-import { createDatasetDatasetsCreatePost } from "@/lib/hey-api/client/sdk.gen";
-import { CreateDatasetInformationRequest, CreateDatasetInformationResponse } from "@/lib/hey-api/client";
+import { createDataset } from "@/lib/hey-api/client/sdk.gen";
+
+export type TemporalGranularity = "year" | "month" | "day";
+export type SpatialGranularity =
+  | "country"
+  | "state"
+  | "district"
+  | "village"
+  | "lat_long";
+
+export interface CreateDatasetInformationRequest {
+  dataset_id: string;
+  file_id: string;
+  dataset_name: string;
+  description: string;
+  tags: string[];
+  dataset_type: string;
+  permission: string;
+  is_spatial: boolean;
+  is_temporal: boolean;
+  temporal_granularities: TemporalGranularity[];
+  spatial_granularities: SpatialGranularity[];
+  location_columns: string[];
+  time_columns: string[];
+}
+
+export interface CreateDatasetInformationResponse {
+  status: string;
+  id: string;
+}
 
 // Zod schemas for each section
 const datasetInformationSchema = z.object({
@@ -144,33 +172,32 @@ export default function Create() {
       console.log("Uploaded file data:", uploadedFileData);
 
       // Prepare the dataset object for the API
-      const datasetPayload: CreateDatasetInformationRequest  = {
+      const datasetPayload: CreateDatasetInformationRequest = {
         dataset_id: uploadedFileData.dataset_id,
         file_id: uploadedFileData.file_id,
         dataset_name: data.name,
-        description: data.description,
+        description: data.description || "",
+        dataset_type: data.category || "",
         tags: data.tags || [],
-        dataset_type: data.category || '',
         permission: data.permission,
         is_spatial: configData.isSpatial,
         is_temporal: configData.isTemporal,
         spatial_granularities: [],
         temporal_granularities: [],
-        user_name: session?.user?.name || "default_user",
-        user_email: session?.user?.email || "default_email",
-        user_id: session?.user?.name || "default_id",
         location_columns: [],
-        time_columns: []
+        time_columns: [],
       };
       console.log("Dataset payload:", datasetPayload);
 
       // Make the API call
-      const response =
-        await createDatasetDatasetsCreatePost({
-          body: datasetPayload,
-        });
+      const response = await createDataset({
+        body: datasetPayload,
+        headers: {
+          Authorization: `Bearer ${session?.user?.apiToken}`,
+        },
+      });
       const responseData = response.data as CreateDatasetInformationResponse;
-      if(!responseData.status){
+      if (!responseData.status) {
         throw new Error("Failed to create dataset");
       }
       if (response.data && response.data.status === "success") {
@@ -373,7 +400,7 @@ export default function Create() {
                     }}
                     dropzoneOptions={dropZoneConfig}
                     className="relative bg-background rounded-lg p-2"
-                    authToken={""}
+                    authToken={session?.user?.apiToken || ""}
                   >
                     <FileInput
                       id="file-input"
@@ -405,7 +432,7 @@ export default function Create() {
                             variant="outline"
                             size="sm"
                             downloadName={`File-${index + 1}`}
-                            accessToken={""}
+                            accessToken={session?.user?.apiToken || ""}
                           >
                             View File
                           </FileDownloadButton>

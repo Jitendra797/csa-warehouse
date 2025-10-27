@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
-export type PipelineStatus = "running" | "completed" | "error" | null;
+export type PipelineStatus = "running" | "completed" | "error" | "null";
 
 export const usePipelineStatusCheck = (
-  pipelineStatus: PipelineStatus | null,
+  pipelineStatus: PipelineStatus,
   checkPipelineStatus: () => Promise<void>,
   pipelineId: string,
-  execId?: string | null,
+  execId: string | null,
 ) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 

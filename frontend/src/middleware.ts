@@ -25,10 +25,10 @@ export async function middleware(req: NextRequest) {
   console.log("[middleware] Current Path:", currentPath);
 
   // If no token, redirect to login
-  if (!token || !token.accessToken) {
+  if (!token || !token.apiToken) {
     console.log("[middleware] No auth token - redirecting to login", {
       hasToken: Boolean(token),
-      hasAccessToken: Boolean(token?.accessToken),
+      hasAccessToken: Boolean(token?.apiToken),
       currentPath,
     });
     return NextResponse.redirect(new URL("/api/auth/signin", req.url));
@@ -36,7 +36,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     // Check access for the current path
-    const accessObject = await checkRole(token.accessToken as string, currentPath);
+    const accessObject = await checkRole(token.apiToken as string, currentPath);
     console.log("[middleware] Access check result:", accessObject);
 
     if (!accessObject) {
@@ -58,7 +58,7 @@ export async function middleware(req: NextRequest) {
   } catch (error) {
     console.error("[middleware] Error checking access:", error, {
       currentPath,
-      hasAccessToken: Boolean(token?.accessToken),
+      hasAccessToken: Boolean(token?.apiToken),
     });
     return NextResponse.redirect(new URL("/access-restricted", req.url));
   }
@@ -68,8 +68,8 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/datastore/:path*",
-    "/pipeline/:path*", 
+    "/pipeline/:path*",
     "/usermanagement/:path*",
-    "/settings/:path*"
+    "/settings/:path*",
   ],
 };

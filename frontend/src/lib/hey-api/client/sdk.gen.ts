@@ -6,43 +6,49 @@ import type {
   Client,
 } from "@hey-api/client-fetch";
 import type {
-  RunPipelinePipelinesRunPostData,
-  RunPipelinePipelinesRunPostResponses,
-  RunPipelinePipelinesRunPostErrors,
-  GetPipelineStatusPipelineStatusGetData,
-  GetPipelineStatusPipelineStatusGetResponses,
-  GetPipelineStatusPipelineStatusGetErrors,
-  GetPipelinesPipelinesGetData,
-  GetPipelinesPipelinesGetResponses,
+  GetPipelinesData,
+  GetPipelinesResponses,
+  RunPipelineData,
+  RunPipelineResponses,
+  RunPipelineErrors,
+  GetPipelineStatusData,
+  GetPipelineStatusResponses,
+  GetPipelineStatusErrors,
   GetFilteredPipelinesPipelinesFilterGetData,
   GetFilteredPipelinesPipelinesFilterGetResponses,
   GetFilteredPipelinesPipelinesFilterGetErrors,
-  GetPresignedUrlPresignedUrlGetData,
-  GetPresignedUrlPresignedUrlGetResponses,
-  GetPresignedUrlPresignedUrlGetErrors,
-  CreateDatasetDatasetsCreatePostData,
-  CreateDatasetDatasetsCreatePostResponses,
-  CreateDatasetDatasetsCreatePostErrors,
-  ExtractCsvDatasetsExtractPostData,
-  ExtractCsvDatasetsExtractPostResponses,
-  ExtractCsvDatasetsExtractPostErrors,
-  GetDatasetColumnsDatasetsColumnsGetData,
-  GetDatasetColumnsDatasetsColumnsGetResponses,
-  GetDatasetColumnsDatasetsColumnsGetErrors,
+  GetPresignedUrlData,
+  GetPresignedUrlResponses,
+  GetPresignedUrlErrors,
+  CreateDatasetData,
+  CreateDatasetResponses,
+  CreateDatasetErrors,
+  ExtractDatasetData,
+  ExtractDatasetResponses,
+  ExtractDatasetErrors,
+  GetDatasetColumnsData,
+  GetDatasetColumnsResponses,
+  GetDatasetColumnsErrors,
   EditDatasetDatasetsDatasetIdEditPutData,
   EditDatasetDatasetsDatasetIdEditPutResponses,
   EditDatasetDatasetsDatasetIdEditPutErrors,
   DeleteDatasetDatasetsDatasetIdDeleteData,
   DeleteDatasetDatasetsDatasetIdDeleteResponses,
   DeleteDatasetDatasetsDatasetIdDeleteErrors,
-  GetDatasetsDatasetsGetData,
-  GetDatasetsDatasetsGetResponses,
-  GetDatasetInfoDatasetGetData,
-  GetDatasetInfoDatasetGetResponses,
-  GetDatasetInfoDatasetGetErrors,
-  GetUserDatasetsUserDatasetsGetData,
-  GetUserDatasetsUserDatasetsGetResponses,
-  GetUserDatasetsUserDatasetsGetErrors,
+  GetDatasetsData,
+  GetDatasetsResponses,
+  GetDatasetInfoData,
+  GetDatasetInfoResponses,
+  GetDatasetInfoErrors,
+  GetUserDatasetsData,
+  GetUserDatasetsResponses,
+  AuthenticateWithGoogleUsersAuthGooglePostData,
+  AuthenticateWithGoogleUsersAuthGooglePostResponses,
+  CheckUserRoleAccessUsersRoleCheckPostData,
+  CheckUserRoleAccessUsersRoleCheckPostResponses,
+  CheckUserRoleAccessUsersRoleCheckPostErrors,
+  InitializeEndpointAccessUsersRoleCheckInitGetData,
+  InitializeEndpointAccessUsersRoleCheckInitGetResponses,
 } from "./types.gen";
 import { client as _heyApiClient } from "./client.gen";
 
@@ -64,18 +70,44 @@ export type Options<
 };
 
 /**
- * Run Pipeline
+ * Get Pipelines Endpoint
  */
-export const runPipelinePipelinesRunPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<RunPipelinePipelinesRunPostData, ThrowOnError>,
+export const getPipelines = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPipelinesData, ThrowOnError>,
 ) => {
-  return (options.client ?? _heyApiClient).post<
-    RunPipelinePipelinesRunPostResponses,
-    RunPipelinePipelinesRunPostErrors,
+  return (options?.client ?? _heyApiClient).get<
+    GetPipelinesResponses,
+    unknown,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/pipelines",
+    ...options,
+  });
+};
+
+/**
+ * Run Pipeline
+ */
+export const runPipeline = <ThrowOnError extends boolean = false>(
+  options: Options<RunPipelineData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RunPipelineResponses,
+    RunPipelineErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/pipelines/run",
     ...options,
     headers: {
@@ -88,33 +120,21 @@ export const runPipelinePipelinesRunPost = <
 /**
  * Get Pipeline Status
  */
-export const getPipelineStatusPipelineStatusGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetPipelineStatusPipelineStatusGetData, ThrowOnError>,
+export const getPipelineStatus = <ThrowOnError extends boolean = false>(
+  options: Options<GetPipelineStatusData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetPipelineStatusPipelineStatusGetResponses,
-    GetPipelineStatusPipelineStatusGetErrors,
+    GetPipelineStatusResponses,
+    GetPipelineStatusErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/pipeline/status",
-    ...options,
-  });
-};
-
-/**
- * Get Pipelines
- */
-export const getPipelinesPipelinesGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetPipelinesPipelinesGetData, ThrowOnError>,
-) => {
-  return (options?.client ?? _heyApiClient).get<
-    GetPipelinesPipelinesGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    url: "/pipelines",
     ...options,
   });
 };
@@ -132,6 +152,12 @@ export const getFilteredPipelinesPipelinesFilterGet = <
     GetFilteredPipelinesPipelinesFilterGetErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/pipelines/filter",
     ...options,
   });
@@ -140,16 +166,20 @@ export const getFilteredPipelinesPipelinesFilterGet = <
 /**
  * Get Presigned Url
  */
-export const getPresignedUrlPresignedUrlGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetPresignedUrlPresignedUrlGetData, ThrowOnError>,
+export const getPresignedUrl = <ThrowOnError extends boolean = false>(
+  options: Options<GetPresignedUrlData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetPresignedUrlPresignedUrlGetResponses,
-    GetPresignedUrlPresignedUrlGetErrors,
+    GetPresignedUrlResponses,
+    GetPresignedUrlErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/presignedURL",
     ...options,
   });
@@ -158,16 +188,20 @@ export const getPresignedUrlPresignedUrlGet = <
 /**
  * Create Dataset
  */
-export const createDatasetDatasetsCreatePost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateDatasetDatasetsCreatePostData, ThrowOnError>,
+export const createDataset = <ThrowOnError extends boolean = false>(
+  options: Options<CreateDatasetData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).post<
-    CreateDatasetDatasetsCreatePostResponses,
-    CreateDatasetDatasetsCreatePostErrors,
+    CreateDatasetResponses,
+    CreateDatasetErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets/create",
     ...options,
     headers: {
@@ -180,16 +214,20 @@ export const createDatasetDatasetsCreatePost = <
 /**
  * Extract Csv
  */
-export const extractCsvDatasetsExtractPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ExtractCsvDatasetsExtractPostData, ThrowOnError>,
+export const extractDataset = <ThrowOnError extends boolean = false>(
+  options: Options<ExtractDatasetData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).post<
-    ExtractCsvDatasetsExtractPostResponses,
-    ExtractCsvDatasetsExtractPostErrors,
+    ExtractDatasetResponses,
+    ExtractDatasetErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets/extract",
     ...options,
     headers: {
@@ -202,16 +240,20 @@ export const extractCsvDatasetsExtractPost = <
 /**
  * Get Dataset Columns
  */
-export const getDatasetColumnsDatasetsColumnsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetDatasetColumnsDatasetsColumnsGetData, ThrowOnError>,
+export const getDatasetColumns = <ThrowOnError extends boolean = false>(
+  options: Options<GetDatasetColumnsData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetDatasetColumnsDatasetsColumnsGetResponses,
-    GetDatasetColumnsDatasetsColumnsGetErrors,
+    GetDatasetColumnsResponses,
+    GetDatasetColumnsErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets/columns",
     ...options,
   });
@@ -230,6 +272,12 @@ export const editDatasetDatasetsDatasetIdEditPut = <
     EditDatasetDatasetsDatasetIdEditPutErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets/{dataset_id}/edit",
     ...options,
   });
@@ -248,6 +296,12 @@ export const deleteDatasetDatasetsDatasetIdDelete = <
     DeleteDatasetDatasetsDatasetIdDeleteErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets/{dataset_id}",
     ...options,
   });
@@ -256,14 +310,20 @@ export const deleteDatasetDatasetsDatasetIdDelete = <
 /**
  * Get Datasets
  */
-export const getDatasetsDatasetsGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetDatasetsDatasetsGetData, ThrowOnError>,
+export const getDatasets = <ThrowOnError extends boolean = false>(
+  options?: Options<GetDatasetsData, ThrowOnError>,
 ) => {
   return (options?.client ?? _heyApiClient).get<
-    GetDatasetsDatasetsGetResponses,
+    GetDatasetsResponses,
     unknown,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/datasets",
     ...options,
   });
@@ -272,14 +332,20 @@ export const getDatasetsDatasetsGet = <ThrowOnError extends boolean = false>(
 /**
  * Get Dataset Info
  */
-export const getDatasetInfoDatasetGet = <ThrowOnError extends boolean = false>(
-  options: Options<GetDatasetInfoDatasetGetData, ThrowOnError>,
+export const getDatasetInfo = <ThrowOnError extends boolean = false>(
+  options: Options<GetDatasetInfoData, ThrowOnError>,
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetDatasetInfoDatasetGetResponses,
-    GetDatasetInfoDatasetGetErrors,
+    GetDatasetInfoResponses,
+    GetDatasetInfoErrors,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/dataset",
     ...options,
   });
@@ -288,17 +354,102 @@ export const getDatasetInfoDatasetGet = <ThrowOnError extends boolean = false>(
 /**
  * Get User Datasets
  */
-export const getUserDatasetsUserDatasetsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetUserDatasetsUserDatasetsGetData, ThrowOnError>,
+export const getUserDatasets = <ThrowOnError extends boolean = false>(
+  options?: Options<GetUserDatasetsData, ThrowOnError>,
 ) => {
-  return (options.client ?? _heyApiClient).get<
-    GetUserDatasetsUserDatasetsGetResponses,
-    GetUserDatasetsUserDatasetsGetErrors,
+  return (options?.client ?? _heyApiClient).get<
+    GetUserDatasetsResponses,
+    unknown,
     ThrowOnError
   >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
     url: "/user/datasets",
+    ...options,
+  });
+};
+
+/**
+ * Authenticate With Google
+ * Authenticate user with Google ID token and return backend token.
+ * This endpoint is called by NextAuth during the sign-in process.
+ */
+export const authenticateWithGoogleUsersAuthGooglePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    AuthenticateWithGoogleUsersAuthGooglePostData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? _heyApiClient).post<
+    AuthenticateWithGoogleUsersAuthGooglePostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    url: "/users/auth/google",
+    ...options,
+  });
+};
+
+/**
+ * Check User Role Access
+ * Check if the current user has access to the requested path based on their role.
+ */
+export const checkUserRoleAccessUsersRoleCheckPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CheckUserRoleAccessUsersRoleCheckPostData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CheckUserRoleAccessUsersRoleCheckPostResponses,
+    CheckUserRoleAccessUsersRoleCheckPostErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/users/role-check",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Initialize Endpoint Access
+ * Initialize default endpoint access controls.
+ * This endpoint can be called to set up the default access rules.
+ */
+export const initializeEndpointAccessUsersRoleCheckInitGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    InitializeEndpointAccessUsersRoleCheckInitGetData,
+    ThrowOnError
+  >,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    InitializeEndpointAccessUsersRoleCheckInitGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/users/role-check/init",
     ...options,
   });
 };

@@ -24,7 +24,8 @@ def extract_csv_data_from_minio(minio_service: MinioStorageService, filename: st
         logger.info(f"Attempting to extract CSV data from file: {filename}")
 
         # Download the file from MinIO
-        file_data = minio_service.client.get_object(minio_service.bucket, filename)
+        file_data = minio_service.client.get_object(
+            minio_service.bucket, filename)
         csv_content = file_data.read().decode("utf-8")
 
         # Parse CSV content using pandas
@@ -52,7 +53,8 @@ def extract_csv_data_from_minio(minio_service: MinioStorageService, filename: st
 
         records = cleaned_records
 
-        logger.info(f"Successfully extracted {len(records)} records from CSV file: {filename}")
+        logger.info(
+            f"Successfully extracted {len(records)} records from CSV file: {filename}")
         return records
 
     except Exception as e:
@@ -76,32 +78,40 @@ def store_csv_data_in_mongodb(
         Dictionary with dataset_id and columns array
     """
     try:
-        logger.info(f"Storing CSV data in datasets collection for file: {filename}")
+        logger.info(
+            f"Storing CSV data in datasets collection for file: {filename}")
 
         import uuid
         from datetime import datetime, timezone
 
-        # Generate UUID for the dataset
-        dataset_uuid = str(uuid.uuid4())
+        # Generate ObjectId for the dataset
+        from bson import ObjectId
+        dataset_id = ObjectId()
 
         # Extract columns from the first row
         columns = list(csv_data[0].keys()) if csv_data else []
 
+        current_time = datetime.now(timezone.utc).isoformat()
+
         document = {
-            "_id": dataset_uuid,
+            "_id": dataset_id,
             "data": csv_data,
             "columns": columns,
             "record_count": len(csv_data),
+            "created_at": current_time,
+            "updated_at": current_time,
         }
 
         result = datasets_collection.insert_one(document)
 
-        logger.info(f"CSV data stored in datasets collection with ID: {dataset_uuid}")
+        logger.info(
+            f"CSV data stored in datasets collection with ID: {dataset_id}")
 
-        return {"dataset_id": dataset_uuid, "columns": columns}
+        return {"dataset_id": str(dataset_id), "columns": columns}
 
     except Exception as e:
-        logger.error(f"Error storing CSV data in datasets collection: {str(e)}")
+        logger.error(
+            f"Error storing CSV data in datasets collection: {str(e)}")
         raise
 
 
@@ -131,7 +141,8 @@ def get_csv_preview(filename: str, limit: int = 5) -> Optional[Dict[str, Any]]:
             cleaned_record = {}
             for key, value in record.items():
                 if value is None or (
-                    isinstance(value, float) and (value != value or value == float("inf") or value == float("-inf"))
+                    isinstance(value, float) and (
+                        value != value or value == float("inf") or value == float("-inf"))
                 ):
                     cleaned_record[key] = None
                 else:

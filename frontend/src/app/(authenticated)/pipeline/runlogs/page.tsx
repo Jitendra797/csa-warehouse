@@ -2,48 +2,94 @@
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Pipeline } from "./pipe-item";
-import { getPipelinesPipelinesGet } from "@/lib/hey-api/client/sdk.gen";
-import {
-  PipelineItem,
-  ResponseGetPipelines,
-} from "@/lib/hey-api/client/types.gen";
+import { getPipelines } from "@/lib/hey-api/client/sdk.gen";
+import { useSession } from "next-auth/react";
+
+export interface PipelineItem {
+  _id: string;
+  pipeline_name: string;
+  is_enabled: boolean;
+  pipeline_status: PipelineStatus;
+}
+
+export type PipelineStatus = "running" | "completed" | "error" | "null";
 
 export default function RunLogs() {
   const [pipelines, setPipelines] = useState<PipelineItem[]>([]);
-
-  const fetchPipelines = async () => {
-    const response = await getPipelinesPipelinesGet();
-    if (response.data) {
-      const responseData: ResponseGetPipelines = response.data;
-      const pipelines: PipelineItem[] = responseData.data;
-      setPipelines(pipelines);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
 
   useEffect(() => {
+    const fetchPipelines = async () => {
+      if (!session?.user?.apiToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Call the API with authentication
+        const response = await getPipelines({
+          headers: {
+            Authorization: `Bearer ${session.user.apiToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.data) {
+          const responseData = response.data;
+          const pipelines: PipelineItem[] = responseData.data;
+          setPipelines(pipelines);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pipelines:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPipelines();
-  }, []);
+  }, [session?.user?.apiToken]);
 
   return (
     <ContentLayout title="Pipelines">
       <div className="h-full flex flex-col p-6">
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" placeholder="Search ..." className="pl-9" />
-        </div>
-        <h4 className="text-lg font-semibold mb-4">Technical Commands</h4>
-        <div className="space-y-4">
-          {pipelines.map((pipeline) => (
-            <Pipeline
-              key={pipeline._id}
-              _id={pipeline._id}
-              pipeline_name={pipeline.pipeline_name}
-              history={pipeline.history}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading pipelines...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mb-8">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input type="search" placeholder="Search ..." className="pl-9" />
+            </div>
+            <h4 className="text-lg font-semibold mb-4">Technical Commands</h4>
+            <div className="space-y-4">
+              {pipelines.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No pipelines found</p>
+                </div>
+              ) : (
+                pipelines.map((pipeline) => (
+                  <Pipeline
+                    key={pipeline._id}
+                    _id={pipeline._id}
+                    pipeline_name={pipeline.pipeline_name}
+                    is_enabled={pipeline.is_enabled}
+                    pipeline_status={pipeline.pipeline_status}
+                  />
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
     </ContentLayout>
   );
