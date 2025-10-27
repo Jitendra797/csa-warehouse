@@ -17,7 +17,7 @@ from app.schemas.models import (
     DatasetColumnsRequest,
 )
 from app.db.database import files as files_collection, datasets_collection, dataset_information_collection
-from app.services.storage.mongodb_service import store_to_mongodb, get_user_info
+from app.services.storage.mongodb_service import store_to_mongodb
 from app.services.storage.minio_service import get_minio_service
 
 datasets_router = APIRouter()
@@ -32,17 +32,15 @@ def get_presigned_url(filename: str, current_user: dict = Depends(get_current_us
     return PresignedURLResponse(upload_url=url, object_name=object_name)
 
 
-@datasets_router.post("/datasets/create", response_model=CreateDatasetInformationResponse)
-async def create_dataset(request: CreateDatasetInformationRequest) -> CreateDatasetInformationResponse:
+@datasets_router.post("/datasets/create", response_model=CreateDatasetInformationResponse, operation_id="create_dataset")
+async def create_dataset(request: CreateDatasetInformationRequest, current_user: dict = Depends(get_current_user)) -> CreateDatasetInformationResponse:
     try:
-        dataset_doc = datasets_collection.find_one({"_id": request.dataset_id})
+        dataset_doc = datasets_collection.find_one(
+            {"_id": ObjectId(request.dataset_id)})
 
         if not dataset_doc:
             raise HTTPException(
                 status_code=404, detail="Dataset not found in datasets_collection")
-
-        # Get user information
-        user_info = get_user_info(request.user_id)
 
         dataset_info = {
             "_id": ObjectId(),
@@ -55,22 +53,20 @@ async def create_dataset(request: CreateDatasetInformationRequest) -> CreateData
             "tags": request.tags,
             "is_temporal": request.is_temporal,
             "is_spatial": request.is_spatial,
-            "temporal_granularities": request.temporal_granularities or [],
-            "spatial_granularities": request.spatial_granularities or [],
-            "location_columns": request.location_columns or [],
-            "time_columns": request.time_columns or [],
+            "temporal_granularities": request.temporal_granularities,
+            "spatial_granularities": request.spatial_granularities,
+            "location_columns": request.location_columns,
+            "time_columns": request.time_columns,
             "pulled_from_pipeline": False,
             "pipeline_id": None,  # null for manual datasets
-            "user_id": [ObjectId(request.user_id)],
-            "username": [user_info["user_name"]],
-            "user_email": [user_info["user_email"]],
+            "user_id": [ObjectId(current_user.get("_id"))],
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
         }
 
         dataset_information_collection.insert_one(dataset_info)
 
-        return CreateDatasetInformationResponse(status="success", id=dataset_info["_id"])
+        return CreateDatasetInformationResponse(status="success", id=str(dataset_info["_id"]))
 
     except Exception as e:
         raise HTTPException(
@@ -97,7 +93,7 @@ def extract_csv(request: ExtractCsvDataRequest, current_user: dict = Depends(get
 
     current_time = datetime.now(timezone.utc).isoformat()
     file_metadata = {
-        "file_id": new_file_id,
+        "_id": new_file_id,
         "file_location": request.file_object,
         "file_type": file_type,
         "file_size": file_size,
@@ -130,8 +126,8 @@ def extract_csv(request: ExtractCsvDataRequest, current_user: dict = Depends(get
     return ExtractAndStoreResponse(status="success", file_id=str(new_file_id), dataset_id=str(dataset_id))
 
 
-@datasets_router.get("/datasets/columns", response_model=DatasetColumnsResponse)
-def get_dataset_columns(dataset_id: str, search: str = None) -> DatasetColumnsResponse:
+@datasets_router.get("/datasets/columns", response_model=DatasetColumnsResponse, operation_id="get_dataset_columns")
+def get_dataset_columns(dataset_id: str, search: str = None, current_user: dict = Depends(get_current_user)) -> DatasetColumnsResponse:
     # Fetch dataset metadata
     dataset = datasets_collection.find_one({"_id": dataset_id})
     if not dataset:

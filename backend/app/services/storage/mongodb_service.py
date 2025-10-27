@@ -256,7 +256,7 @@ def get_data_from_collection(
             return {
                 "dataset_name": info_doc.get("dataset_name", ""),
                 "dataset_id": str(info_doc.get("dataset_id")),
-                "file_id": str(info_doc.get("file_id", "")),
+                "file_id": str(info_doc.get("_id", "")),
                 "description": info_doc.get("description", ""),
                 "tags": info_doc.get("tags", []),
                 "dataset_type": info_doc.get("dataset_type", ""),
@@ -314,7 +314,7 @@ def get_data_from_collection(
                     {
                         "dataset_name": doc.get("dataset_name", ""),
                         "dataset_id": str(doc.get("dataset_id")),
-                        "file_id": str(doc.get("file_id", "")),
+                        "file_id": str(doc.get("_id", "")),
                         "description": doc.get("description", ""),
                         "tags": doc.get("tags", []),
                         "dataset_type": doc.get("dataset_type", ""),

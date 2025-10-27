@@ -92,25 +92,22 @@ class SpatialGranularity(str, Enum):
 
 
 class CreateDatasetInformationRequest(BaseModel):
-    dataset_id: str = Field(..., description="Dataset ID from /datasets/store")
+    dataset_id: str = Field(...,
+                            description="Dataset ID from /datasets/extract")
     file_id: str = Field(..., description="File ID from /datasets/extract")
     dataset_name: str = Field(..., description="Name of the dataset")
-    description: Optional[str] = Field(
-        None, description="Description of the dataset")
-    tags: List[str] = Field(default_factory=list,
-                            description="Tags for dataset")
+    description: str = Field(..., description="Description of the dataset")
+    tags: List[str] = Field(..., description="Tags for dataset")
     dataset_type: str = Field(..., description="Type of dataset")
     permission: str = Field(..., description="Access permission")
-    is_spatial: bool = Field(False, description="Spatial dataset?")
-    is_temporal: bool = Field(False, description="Temporal dataset?")
-    temporal_granularities: Optional[List[TemporalGranularity]] = None
-    spatial_granularities: Optional[List[SpatialGranularity]] = None
-    location_columns: Optional[List[str]] = Field(
-        None, description="location columns")
-    time_columns: Optional[List[str]] = Field(None, description="time columns")
-    user_id: str = Field(..., description="User ID")
-    user_name: str = Field(..., description="User name")
-    user_email: Optional[str] = Field(None, description="User email")
+    is_spatial: bool = Field(..., description="Spatial dataset?")
+    is_temporal: bool = Field(..., description="Temporal dataset?")
+    temporal_granularities: List[TemporalGranularity] = Field(
+        ..., description="Temporal granularities")
+    spatial_granularities: List[SpatialGranularity] = Field(
+        ..., description="Spatial granularities")
+    location_columns: List[str] = Field(..., description="location columns")
+    time_columns: List[str] = Field(..., description="time columns")
 
 
 class CreateDatasetInformationResponse(BaseModel):
