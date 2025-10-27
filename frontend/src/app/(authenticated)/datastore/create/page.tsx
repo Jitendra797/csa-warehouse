@@ -40,7 +40,12 @@ import {
 import { createDataset } from "@/lib/hey-api/client/sdk.gen";
 
 export type TemporalGranularity = "year" | "month" | "day";
-export type SpatialGranularity = "country" | "state" | "district" | "village" | "lat_long";
+export type SpatialGranularity =
+  | "country"
+  | "state"
+  | "district"
+  | "village"
+  | "lat_long";
 
 export interface CreateDatasetInformationRequest {
   dataset_id: string;
@@ -167,12 +172,12 @@ export default function Create() {
       console.log("Uploaded file data:", uploadedFileData);
 
       // Prepare the dataset object for the API
-      const datasetPayload: CreateDatasetInformationRequest  = {
+      const datasetPayload: CreateDatasetInformationRequest = {
         dataset_id: uploadedFileData.dataset_id,
         file_id: uploadedFileData.file_id,
         dataset_name: data.name,
-        description: data.description || '',
-        dataset_type: data.category || '',
+        description: data.description || "",
+        dataset_type: data.category || "",
         tags: data.tags || [],
         permission: data.permission,
         is_spatial: configData.isSpatial,
@@ -180,20 +185,19 @@ export default function Create() {
         spatial_granularities: [],
         temporal_granularities: [],
         location_columns: [],
-        time_columns: []
+        time_columns: [],
       };
       console.log("Dataset payload:", datasetPayload);
 
       // Make the API call
-      const response =
-        await createDataset({
-          body: datasetPayload,
-          headers: {
-            Authorization: `Bearer ${session?.user?.apiToken}`,
-          },
-        });
+      const response = await createDataset({
+        body: datasetPayload,
+        headers: {
+          Authorization: `Bearer ${session?.user?.apiToken}`,
+        },
+      });
       const responseData = response.data as CreateDatasetInformationResponse;
-      if(!responseData.status){
+      if (!responseData.status) {
         throw new Error("Failed to create dataset");
       }
       if (response.data && response.data.status === "success") {

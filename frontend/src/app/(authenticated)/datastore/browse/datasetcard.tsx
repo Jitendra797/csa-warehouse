@@ -54,7 +54,7 @@ export function DatasetCard({
           {dataset_name}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-          {description? description : "No description provided."}
+          {description ? description : "No description provided."}
         </CardDescription>
         <p className="text-sm font-semibold text-foreground py-2">
           {pulled_from_pipeline ? (
@@ -73,7 +73,9 @@ export function DatasetCard({
       <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {pulled_from_pipeline ? "Pipeline Lastly Run By" : "Dataset Created By"}
+            {pulled_from_pipeline
+              ? "Pipeline Lastly Run By"
+              : "Dataset Created By"}
           </p>
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground flex items-center">

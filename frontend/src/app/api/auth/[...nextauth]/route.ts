@@ -63,25 +63,27 @@ const authOptions: AuthOptions = {
       if (account?.provider === "google" && account.id_token) {
         try {
           // SECURE: Send the Google ID Token to your backend
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/auth/google`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${account.id_token}`,
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/auth/google`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${account.id_token}`,
+              },
+              body: JSON.stringify({}),
             },
-            body: JSON.stringify({}),
-          });
+          );
 
           if (!response.ok) {
             console.error("Backend auth failed:", response.statusText);
             return false; // Abort login
           }
-          
+
           // Your backend returns its *own* token and user data
           // We attach this to the `account` object to pass it to the `jwt` callback
           account.backendToken = await response.json();
           return true;
-
         } catch (error) {
           console.error("Error in signIn callback:", error);
           return false;
@@ -129,7 +131,7 @@ const authOptions: AuthOptions = {
 
       return session;
     },
-    
+
     async redirect({ url }: { url: string }): Promise<string> {
       if (url.includes("/api/auth/callback/google")) {
         return `${process.env.NEXTAUTH_URL}/datastore/browse`;

@@ -3,10 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { usePipelineStatusCheck } from "@/components/hooks/check-pipeline-status";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
-import {
-  runPipeline,
-  getPipelineStatus,
-} from "@/lib/hey-api/client/sdk.gen";
+import { runPipeline, getPipelineStatus } from "@/lib/hey-api/client/sdk.gen";
 import { useSession } from "next-auth/react";
 
 export interface PipelineItem {
@@ -29,11 +26,15 @@ export interface RunPipelineResponse {
   executed_at: string;
 }
 
-export function Pipeline({ _id, pipeline_name, is_enabled, pipeline_status }: PipelineItem) {
+export function Pipeline({
+  _id,
+  pipeline_name,
+  is_enabled,
+  pipeline_status,
+}: PipelineItem) {
   console.log(is_enabled);
-  const [currentStatus, setCurrentStatus] = useState<PipelineStatus>(
-    pipeline_status,
-  );
+  const [currentStatus, setCurrentStatus] =
+    useState<PipelineStatus>(pipeline_status);
   const [currentExecId, setCurrentExecId] = useState<string | null>(null);
   const { data: session } = useSession();
 
@@ -46,9 +47,9 @@ export function Pipeline({ _id, pipeline_name, is_enabled, pipeline_status }: Pi
     const response = await runPipeline({
       body: runPipelineRequest,
       headers: {
-        'Authorization': `Bearer ${session?.user?.apiToken}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${session?.user?.apiToken}`,
+        "Content-Type": "application/json",
+      },
     });
     if (response.data) {
       const responseData: RunPipelineResponse = response.data;
@@ -67,9 +68,9 @@ export function Pipeline({ _id, pipeline_name, is_enabled, pipeline_status }: Pi
           execution_id: currentExecId,
         },
         headers: {
-          'Authorization': `Bearer ${session?.user?.apiToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${session?.user?.apiToken}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.data) {

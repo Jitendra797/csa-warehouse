@@ -157,81 +157,87 @@ export const FileUploader = forwardRef<
       [value, onValueChange],
     );
 
-    const uploadFile = useCallback(async (file: File) => {
-      const formData = new FormData();
-      formData.append("files", file);
-      formData.append("metadata", JSON.stringify({}));
+    const uploadFile = useCallback(
+      async (file: File) => {
+        const formData = new FormData();
+        formData.append("files", file);
+        formData.append("metadata", JSON.stringify({}));
 
-      try {
-        // Add timestamp to filename to prevent duplicates
-        const timestamp = new Date().getTime();
-        const fileExt = file.name.split(".").pop() || "";
-        const fileNameWithoutExt = file.name.slice(0, -(fileExt.length + 1));
-        const uniqueFileName = `${fileNameWithoutExt}_${timestamp}.${fileExt}`;
+        try {
+          // Add timestamp to filename to prevent duplicates
+          const timestamp = new Date().getTime();
+          const fileExt = file.name.split(".").pop() || "";
+          const fileNameWithoutExt = file.name.slice(0, -(fileExt.length + 1));
+          const uniqueFileName = `${fileNameWithoutExt}_${timestamp}.${fileExt}`;
 
-        // Get presigned URL using SDK
-        const response = await getPresignedUrl({
-          query: {
-            filename: uniqueFileName,
-          },
-          headers: {
-            Authorization: `Bearer ${session?.user?.apiToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-        const presignedUrlResponse= response.data as PresignedUrlResponse;
-        console.log("Presigned URL response:", presignedUrlResponse);
-        const upload_url = presignedUrlResponse?.upload_url;
-        const object_name = presignedUrlResponse?.object_name;
-        if (!upload_url) {
-          throw new Error("Failed to get presigned URL");
-        }
+          // Get presigned URL using SDK
+          const response = await getPresignedUrl({
+            query: {
+              filename: uniqueFileName,
+            },
+            headers: {
+              Authorization: `Bearer ${session?.user?.apiToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+          const presignedUrlResponse = response.data as PresignedUrlResponse;
+          console.log("Presigned URL response:", presignedUrlResponse);
+          const upload_url = presignedUrlResponse?.upload_url;
+          const object_name = presignedUrlResponse?.object_name;
+          if (!upload_url) {
+            throw new Error("Failed to get presigned URL");
+          }
 
-        // Now upload the file using the presigned URL
-        const uploadResponse = await fetch(upload_url, {
-          method: "PUT",
-          body: file,
-          headers: {
-            "Content-Type": file.type,
-          },
-        });
-        if (!uploadResponse.ok) {
-          throw new Error("Upload failed");
-        }
-        console.log("Upload response:", uploadResponse);
+          // Now upload the file using the presigned URL
+          const uploadResponse = await fetch(upload_url, {
+            method: "PUT",
+            body: file,
+            headers: {
+              "Content-Type": file.type,
+            },
+          });
+          if (!uploadResponse.ok) {
+            throw new Error("Upload failed");
+          }
+          console.log("Upload response:", uploadResponse);
 
-        // Extract dataset after successful upload
-        const extractCsvDataRequest: ExtractCsvDataRequest = {
-          file_object: object_name,
-        };
-        const extractresponse = await extractDataset({
-          body: extractCsvDataRequest,
-          headers: {
-            Authorization: `Bearer ${session?.user?.apiToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-        const extractResponseData = extractresponse.data as ExtractAndStoreResponse;
-        if (!extractResponseData) {
-          throw new Error("Failed to extract dataset");
+          // Extract dataset after successful upload
+          const extractCsvDataRequest: ExtractCsvDataRequest = {
+            file_object: object_name,
+          };
+          const extractresponse = await extractDataset({
+            body: extractCsvDataRequest,
+            headers: {
+              Authorization: `Bearer ${session?.user?.apiToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+          const extractResponseData =
+            extractresponse.data as ExtractAndStoreResponse;
+          if (!extractResponseData) {
+            throw new Error("Failed to extract dataset");
+          }
+          const file_id = extractResponseData?.file_id;
+          if (!file_id) {
+            throw new Error("Failed to get file ID from extraction response");
+          }
+          const dataset_id = extractResponseData?.dataset_id;
+          if (!dataset_id) {
+            throw new Error(
+              "Failed to get dataset ID from extraction response",
+            );
+          }
+          return {
+            file_id,
+            dataset_id,
+          };
+        } catch (error) {
+          console.error("Upload error:", error);
+          throw error;
         }
-        const file_id = extractResponseData?.file_id;
-        if (!file_id) {
-          throw new Error("Failed to get file ID from extraction response");
-        }
-        const dataset_id = extractResponseData?.dataset_id;
-        if (!dataset_id) {
-          throw new Error("Failed to get dataset ID from extraction response");
-        }
-        return {
-          file_id,
-          dataset_id
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
-        throw error;
-      }
-    }, [session?.user?.apiToken]);
+      },
+      [session?.user?.apiToken],
+    );
 
     const onDrop = useCallback(
       async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {

@@ -68,8 +68,8 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/datastore/:path*",
-    "/pipeline/:path*", 
+    "/pipeline/:path*",
     "/usermanagement/:path*",
-    "/settings/:path*"
+    "/settings/:path*",
   ],
 };

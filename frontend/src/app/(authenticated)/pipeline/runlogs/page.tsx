@@ -30,13 +30,13 @@ export default function RunLogs() {
 
       try {
         setLoading(true);
-        
+
         // Call the API with authentication
         const response = await getPipelines({
           headers: {
-            'Authorization': `Bearer ${session.user.apiToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${session.user.apiToken}`,
+            "Content-Type": "application/json",
+          },
         });
 
         if (response.data) {

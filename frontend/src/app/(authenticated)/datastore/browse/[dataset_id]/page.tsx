@@ -9,7 +9,12 @@ import { getDatasetInfo } from "@/lib/hey-api/client/sdk.gen";
 import { useSession } from "next-auth/react";
 
 export type TemporalGranularity = "year" | "month" | "day";
-export type SpatialGranularity = "country" | "state" | "district" | "village" | "lat_long";
+export type SpatialGranularity =
+  | "country"
+  | "state"
+  | "district"
+  | "village"
+  | "lat_long";
 
 export interface DatasetDetail {
   dataset_id: string;
@@ -36,7 +41,7 @@ export interface DatasetDetail {
 export default function DatasetDetails() {
   const params = useParams();
   const dataset_id = params.dataset_id as string;
-  const [datasetData, setDatasetData] = useState<DatasetDetail| null>(null);
+  const [datasetData, setDatasetData] = useState<DatasetDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
@@ -48,11 +53,11 @@ export default function DatasetDetails() {
 
       const response = await getDatasetInfo({
         query: {
-          id: dataset_id
+          id: dataset_id,
         },
         headers: {
-          'Authorization': `Bearer ${session?.user.apiToken}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${session?.user.apiToken}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -143,7 +148,9 @@ export default function DatasetDetails() {
               <div className="space-y-2">
                 <p className="font-semibold">Description</p>
                 <p className="text-base leading-relaxed line-clamp-2 text-muted-foreground">
-                  {datasetData.description? datasetData.description : "No description provided."}
+                  {datasetData.description
+                    ? datasetData.description
+                    : "No description provided."}
                 </p>
               </div>
 
@@ -152,7 +159,11 @@ export default function DatasetDetails() {
                 {/* Dataset Type */}
                 <div className="space-y-2">
                   <p className="font-semibold">Dataset Type</p>
-                  <p className="text-base text-muted-foreground">{datasetData.dataset_type? datasetData.dataset_type: "dataset type"}</p>
+                  <p className="text-base text-muted-foreground">
+                    {datasetData.dataset_type
+                      ? datasetData.dataset_type
+                      : "dataset type"}
+                  </p>
                 </div>
 
                 {/* User Information */}
@@ -164,7 +175,11 @@ export default function DatasetDetails() {
                   </p>
                   <div className="space-y-1">
                     <p className="text-base text-muted-foreground">
-                      {datasetData.user_names.length > 0 ? datasetData.user_names[datasetData.user_names.length - 1] : "Unknown User"}
+                      {datasetData.user_names.length > 0
+                        ? datasetData.user_names[
+                            datasetData.user_names.length - 1
+                          ]
+                        : "Unknown User"}
                     </p>
                   </div>
                 </div>
