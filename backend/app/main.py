@@ -8,7 +8,7 @@ from app.api.endpoints.users.users import router as user_router
 from app.api.endpoints.users.role_check import router as role_check_router
 from app.auth.token_middleware import TokenAuthMiddleware
 from app.auth.security import require_bearer_token
-from app.dashboards.streamlit_integration import mount_streamlit_app
+from app.dashboards.streamlit_integration import mount_all_dashboards
 import logging
 import sys
 
@@ -43,13 +43,9 @@ app.include_router(user_router)
 app.include_router(role_check_router, dependencies=[
                    Depends(require_bearer_token)])
 
-# Mount Streamlit dashboard
+# Mount all Streamlit dashboards
 try:
-    mount_streamlit_app(
-        app=app,
-        dashboard_path="app/dashboards/demo_dashboard.py",
-        mount_path="/dashboard",
-        port=8501
-    )
+    mount_all_dashboards(
+        app=app, dashboards_dir="app/dashboards", base_port=8501)
 except Exception as e:
-    logging.error(f"Failed to mount Streamlit dashboard: {e}")
+    logging.error(f"Failed to mount Streamlit dashboards: {e}")
