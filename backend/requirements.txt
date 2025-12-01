@@ -1,0 +1,24 @@
+# Requirements file generated from pyproject.toml
+# Python version: >=3.10,<3.13
+
+# Core dependencies
+fastapi>=0.115.13,<0.116.0
+uvicorn>=0.34.3,<0.35.0
+pydantic>=2.11.7,<3.0.0
+requests>=2.32.4,<3.0.0
+pymongo>=4.13.2,<5.0.0
+python-dotenv>=1.1.1,<2.0.0
+minio
+pandas
+pydantic-settings
+python-multipart
+mangum
+boto3
+dnspython
+streamlit>=1.50.0,<2.0.0
+plotly>=6.3.1,<7.0.0
+streamlit-shadcn-ui>=0.1.19,<0.2.0
+
+# Git dependencies
+csa-erp-client @ git+https://github.com/Agriworks/erpnext_client.git
+

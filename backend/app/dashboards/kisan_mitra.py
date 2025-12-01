@@ -69,14 +69,14 @@ total_cases = df_filtered_issues["Case No"].nunique()
 resolved_issues = df_filtered_issues[df_filtered_issues["Status"] == "Resolved"].copy(
 )
 
-resolved_issues = df_filtered_issues[df_filtered_issues["Status"] == "Resolved"].copy(
-)
-resolved_issues["resolution days"] = (
-    resolved_issues["Resolution Date Time"] -
-    resolved_issues["Opening Date Time"]
-).dt.days
-
-avg_resolution_days = round(resolved_issues["resolution days"].mean(), 2)
+if not resolved_issues.empty:
+    resolved_issues["resolution days"] = (
+        resolved_issues["Resolution Date Time"] -
+        resolved_issues["Opening Date Time"]
+    ).dt.days
+    avg_resolution_days = round(resolved_issues["resolution days"].mean(), 2)
+else:
+    avg_resolution_days = 0
 
 closed_issues_count = len(
     df_filtered_issues[df_filtered_issues["Status"] == "Closed"])
@@ -86,38 +86,43 @@ pending_issues = df_filtered_issues[
 ].copy()
 
 
-# Calculate resolution rate
-resolution_rate = round(
-    df_filtered_issues[df_filtered_issues["Status"]
-                       == "Resolved"]["Case No"].nunique()
-    / total_cases
-    * 100,
-    2,
-)
+# Calculate resolution rate (avoid division by zero)
+if total_cases > 0:
+    resolution_rate = round(
+        df_filtered_issues[df_filtered_issues["Status"]
+                           == "Resolved"]["Case No"].nunique()
+        / total_cases
+        * 100,
+        2,
+    )
+else:
+    resolution_rate = 0
 
 # Calculate Aging of Pending Issues
-pending_issues["Aging Days"] = (
-    pd.Timestamp.today().normalize() - pending_issues["Opening Date"]
-).dt.days
+if not pending_issues.empty:
+    pending_issues["Aging Days"] = (
+        pd.Timestamp.today().normalize() - pending_issues["Opening Date"]
+    ).dt.days
 
+    def categorize_aging(days):
+        if days < 7:
+            return "< 7 days"
+        elif 7 <= days <= 30:
+            return "7–30 days"
+        else:
+            return "> 30 days"
 
-def categorize_aging(days):
-    if days < 7:
-        return "< 7 days"
-    elif 7 <= days <= 30:
-        return "7–30 days"
-    else:
-        return "> 30 days"
+    pending_issues["Aging Category"] = pending_issues["Aging Days"].apply(
+        categorize_aging)
 
-
-pending_issues["Aging Category"] = pending_issues["Aging Days"].apply(
-    categorize_aging)
-
-aging_order = ["< 7 days", "7–30 days", "> 30 days"]
-aging_counts = (
-    pending_issues["Aging Category"].value_counts().reindex(
-        aging_order, fill_value=0)
-)
+    aging_order = ["< 7 days", "7–30 days", "> 30 days"]
+    aging_counts = (
+        pending_issues["Aging Category"].value_counts().reindex(
+            aging_order, fill_value=0)
+    )
+else:
+    aging_order = ["< 7 days", "7–30 days", "> 30 days"]
+    aging_counts = pd.Series([0, 0, 0], index=aging_order)
 
 # Create a bar chart for Aging of Pending Issues
 aging_bar = go.Figure(
@@ -143,13 +148,22 @@ aging_bar.update_layout(
 
 
 priority_counts = df_filtered_issues["Priority"].value_counts()
-priority_percentage = (priority_counts / priority_counts.sum() * 100).round(2)
+if not priority_counts.empty and priority_counts.sum() > 0:
+    priority_percentage = (
+        priority_counts / priority_counts.sum() * 100).round(2)
+else:
+    priority_percentage = pd.Series([], dtype=float)
 
 # Create plotly table for more insights to bar chart
-
-min_aging = pending_issues["Aging Days"].min()
-max_aging = pending_issues["Aging Days"].max()
-aging_over_360 = pending_issues[pending_issues["Aging Days"] > 360].shape[0]
+if not pending_issues.empty:
+    min_aging = pending_issues["Aging Days"].min()
+    max_aging = pending_issues["Aging Days"].max()
+    aging_over_360 = pending_issues[pending_issues["Aging Days"]
+                                    > 360].shape[0]
+else:
+    min_aging = 0
+    max_aging = 0
+    aging_over_360 = 0
 
 aging_table = go.Figure(
     data=[
@@ -189,82 +203,101 @@ aging_table.update_layout(
 )
 
 # Temp dataframe for Pie Chart
-chart_data = pd.DataFrame(
-    {
-        "priority": priority_counts.index,
-        "count": priority_counts.values,
-        "percent": priority_percentage.values,
-    }
-)
+if not priority_counts.empty:
+    chart_data = pd.DataFrame(
+        {
+            "priority": priority_counts.index,
+            "count": priority_counts.values,
+            "percent": priority_percentage.values if not priority_percentage.empty else [0] * len(priority_counts),
+        }
+    )
 
-priority_pie = px.pie(
-    chart_data,
-    names="priority",
-    values="count",
-    hover_data=["count", "percent"],
-    color_discrete_sequence=px.colors.qualitative.Pastel,
-)
-priority_pie.update_traces(
-    texttemplate="%{percent:.2%}",  # ensures consistent display like 10.0%
-    customdata=chart_data[["count"]].to_numpy(),
-    hovertemplate="<b>%{label}</b><br>Cases: %{customdata[0]}",
-)
+    priority_pie = px.pie(
+        chart_data,
+        names="priority",
+        values="count",
+        hover_data=["count", "percent"],
+        color_discrete_sequence=px.colors.qualitative.Pastel,
+    )
+    priority_pie.update_traces(
+        texttemplate="%{percent:.2%}",  # ensures consistent display like 10.0%
+        customdata=chart_data[["count"]].to_numpy(),
+        hovertemplate="<b>%{label}</b><br>Cases: %{customdata[0]}",
+    )
+else:
+    # Create empty pie chart
+    chart_data = pd.DataFrame({"priority": [], "count": [], "percent": []})
+    priority_pie = px.pie(chart_data, names="priority", values="count")
 
 # Create line chart for Resolved cases vs Cases Registered over time
-
-registered_monthly = (
-    df_filtered_issues.groupby(
-        df_filtered_issues["Opening Date Time"].dt.to_period("M")
-    )["Case No"]
-    .nunique()
-    .reset_index(name="Registered Cases")
-)
-registered_monthly["Month"] = registered_monthly["Opening Date Time"].dt.to_timestamp()
-
-resolved_monthly = (
-    resolved_issues.groupby(resolved_issues["Resolution Date Time"].dt.to_period("M"))[
-        "Case No"
-    ]
-    .nunique()
-    .reset_index(name="Resolved Cases")
-)
-resolved_monthly["Month"] = resolved_monthly["Resolution Date Time"].dt.to_timestamp()
-
-monthly_summary = (
-    pd.merge(
-        registered_monthly[["Month", "Registered Cases"]],
-        resolved_monthly[["Month", "Resolved Cases"]],
-        on="Month",
-        how="outer",
+if not df_filtered_issues.empty and "Opening Date Time" in df_filtered_issues.columns:
+    registered_monthly = (
+        df_filtered_issues.groupby(
+            df_filtered_issues["Opening Date Time"].dt.to_period("M")
+        )["Case No"]
+        .nunique()
+        .reset_index(name="Registered Cases")
     )
-    .fillna(0)
-    .sort_values("Month")
-)
-monthly_summary["Registered Cases"] = monthly_summary["Registered Cases"].astype(
-    int)
-monthly_summary["Resolved Cases"] = monthly_summary["Resolved Cases"].astype(
-    int)
+    registered_monthly["Month"] = registered_monthly["Opening Date Time"].dt.to_timestamp()
+else:
+    registered_monthly = pd.DataFrame({"Month": [], "Registered Cases": []})
 
-monthly_melted = monthly_summary.melt(
-    id_vars="Month",
-    value_vars=["Registered Cases", "Resolved Cases"],
-    var_name="Type",
-    value_name="Number of Cases",
-)
+if not resolved_issues.empty and "Resolution Date Time" in resolved_issues.columns:
+    resolved_monthly = (
+        resolved_issues.groupby(resolved_issues["Resolution Date Time"].dt.to_period("M"))[
+            "Case No"
+        ]
+        .nunique()
+        .reset_index(name="Resolved Cases")
+    )
+    resolved_monthly["Month"] = resolved_monthly["Resolution Date Time"].dt.to_timestamp()
+else:
+    resolved_monthly = pd.DataFrame({"Month": [], "Resolved Cases": []})
 
-trend_line = px.line(
-    monthly_melted,
-    x="Month",
-    y="Number of Cases",
-    color="Type",
-    markers=True,
-)
-trend_line.update_layout(
-    xaxis_title="Month",
-    yaxis_title="Number of Cases",
-    xaxis=dict(range=[monthly_melted["Month"].min(),
-               monthly_melted["Month"].max()]),
-)
+if not registered_monthly.empty or not resolved_monthly.empty:
+    monthly_summary = (
+        pd.merge(
+            registered_monthly[["Month", "Registered Cases"]] if not registered_monthly.empty else pd.DataFrame(
+                {"Month": [], "Registered Cases": []}),
+            resolved_monthly[["Month", "Resolved Cases"]] if not resolved_monthly.empty else pd.DataFrame(
+                {"Month": [], "Resolved Cases": []}),
+            on="Month",
+            how="outer",
+        )
+        .fillna(0)
+    )
+    if not monthly_summary.empty:
+        monthly_summary = monthly_summary.sort_values("Month")
+        monthly_summary["Registered Cases"] = monthly_summary["Registered Cases"].astype(
+            int)
+        monthly_summary["Resolved Cases"] = monthly_summary["Resolved Cases"].astype(
+            int)
+
+        monthly_melted = monthly_summary.melt(
+            id_vars="Month",
+            value_vars=["Registered Cases", "Resolved Cases"],
+            var_name="Type",
+            value_name="Number of Cases",
+        )
+
+        if not monthly_melted.empty:
+            trend_line = px.line(
+                monthly_melted,
+                x="Month",
+                y="Number of Cases",
+                color="Type",
+                markers=True,
+            )
+            trend_line.update_layout(
+                xaxis_title="Month",
+                yaxis_title="Number of Cases",
+            )
+        else:
+            trend_line = px.line(x=[], y=[], color=[])
+    else:
+        trend_line = px.line(x=[], y=[], color=[])
+else:
+    trend_line = px.line(x=[], y=[], color=[])
 
 # Creating a distress summary table
 
