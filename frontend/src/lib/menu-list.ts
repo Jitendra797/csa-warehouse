@@ -38,12 +38,6 @@ export function getMenuList(): Group[] {
           href: "/dashboard",
           label: "Dashboards",
           icon: Grid,
-          submenus: [
-            {
-              href: "/dashboard/kisanmitra",
-              label: "Kisanmitra",
-            },
-          ],
         },
         {
           href: "/datastore",
