@@ -18,16 +18,16 @@ from app.schemas.models import (
 )
 from app.db.database import files as files_collection, datasets_collection, dataset_information_collection
 from app.services.storage.mongodb_service import store_to_mongodb
-from app.services.storage.minio_service import get_minio_service
+from app.services.storage.storage_factory import get_storage_service
 
 datasets_router = APIRouter()
 
 
 @datasets_router.get("/presignedURL", response_model=PresignedURLResponse, operation_id="get_presigned_url")
 def get_presigned_url(filename: str, current_user: dict = Depends(get_current_user)) -> PresignedURLResponse:
-    minio_service = get_minio_service()
+    storage_service = get_storage_service()
     user_id = str(current_user.get("_id"))
-    url, object_name = minio_service.generate_presigned_url(
+    url, object_name = storage_service.generate_presigned_url(
         filename=filename, user_id=user_id)
     return PresignedURLResponse(upload_url=url, object_name=object_name)
 
@@ -77,11 +77,11 @@ async def create_dataset(request: CreateDatasetInformationRequest, current_user:
 def extract_csv(request: ExtractCsvDataRequest, current_user: dict = Depends(get_current_user)) -> ExtractAndStoreResponse:
     new_file_id = ObjectId()
     dataset_id = ObjectId()
-    minio_service = get_minio_service()
+    storage_service = get_storage_service()
 
-    response = minio_service.get_object(object_name=request.file_object)
+    response = storage_service.get_object(object_name=request.file_object)
     if not response:
-        raise HTTPException(status_code=404, detail="File not found in MinIO")
+        raise HTTPException(status_code=404, detail="File not found in storage backend")
 
     file_content = response.read()
     file_type = mimetypes.guess_type(request.file_object)[
