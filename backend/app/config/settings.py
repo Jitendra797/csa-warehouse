@@ -6,7 +6,12 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     app_name: str = "Warehouse"
-    environment: str = "development"
+    # High-level environment name, controlled via ENVIRONMENT env var.
+    # Example values: "development", "staging", "production"
+    environment: str = Field(default="development", env="ENVIRONMENT")
+    # When True we treat the app as running in developer/local mode and use MinIO.
+    # When False (e.g. in production) we use AWS S3.
+    dev_mode: bool = Field(default=True, env="DEV_MODE")
     logs_directory: str = "logs/"
     debug: bool = True
 
