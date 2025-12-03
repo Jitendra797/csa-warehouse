@@ -6,10 +6,9 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from ..config.logging import get_logger
 from app.db.database import datasets_collection
-from app.services.storage.minio_service import get_minio_service
-
+from app.services.storage.storage_factory import get_storage_service
 logger = get_logger("db")
-minio_service = get_minio_service()
+storage_service = get_storage_service()
 
 
 def download_and_store_file(file_url):
@@ -63,7 +62,7 @@ def store_file_metadata(filename, content_type, file_url):
 
 def upload_file_to_presigned_url(file_path: str):
     filename = file_path.split("/")[-1]
-    upload_url = minio_service.generate_presigned_url(filename)
+    upload_url, object_name = storage_service.generate_presigned_url(filename)
 
     mime_type, _ = mimetypes.guess_type(file_path)
     mime_type = mime_type or "application/octet-stream"

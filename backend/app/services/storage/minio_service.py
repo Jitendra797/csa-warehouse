@@ -42,11 +42,19 @@ class MinioStorageService(BaseStorage):
         self.client.put_object(self.bucket, file_name, BytesIO(file_bytes), length=len(file_bytes))
         return f"{self.bucket}/{file_name}"
 
-    def generate_presigned_url(self, filename: str, user_id: str) -> str:
+    def generate_presigned_url(self, filename: str, user_id: str | None = None):
+        """
+        Generate a presigned URL for uploading to MinIO.
+
+        Returns (url, object_name) to keep compatibility with S3StorageService.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         name, extension = os.path.splitext(filename)
         new_filename = f"{name}_{timestamp}{extension}"
-        object_name = f"{user_id}/{new_filename}"
+        if user_id:
+            object_name = f"{user_id}/{new_filename}"
+        else:
+            object_name = new_filename
 
         url = self.client.presigned_put_object(
             self.bucket, object_name, expires=timedelta(seconds=self.minio_presigned_url_expiry)
