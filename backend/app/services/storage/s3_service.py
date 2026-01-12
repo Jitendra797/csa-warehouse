@@ -7,11 +7,10 @@ from botocore.client import Config
 from app.config.aws_settings import get_aws_settings
 from .base_storage import BaseStorage
 
-aws_settings = get_aws_settings()
-
 
 class S3StorageService(BaseStorage):
     def __init__(self):
+        aws_settings = get_aws_settings()
         self.client = boto3.client(
             "s3",
             region_name=aws_settings.aws_region,
@@ -23,7 +22,8 @@ class S3StorageService(BaseStorage):
         self.s3_presigned_url_expiry = aws_settings.s3_presigned_url_expiry
 
     def upload_file(self, file_bytes: bytes, file_name: str) -> str:
-        self.client.put_object(Bucket=self.bucket, Key=file_name, Body=BytesIO(file_bytes))
+        self.client.put_object(
+            Bucket=self.bucket, Key=file_name, Body=BytesIO(file_bytes))
         return f"{self.bucket}/{file_name}"
 
     def generate_presigned_url(self, filename: str, user_id: str | None = None):
@@ -70,5 +70,3 @@ class S3StorageService(BaseStorage):
 
 def get_s3_service():
     return S3StorageService()
-
-
